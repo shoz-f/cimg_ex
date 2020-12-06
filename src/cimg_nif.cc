@@ -48,12 +48,19 @@ int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
 /***** ERL TERM CONVERTER *****/
 int enif_get_cimgu8(ErlNifEnv* env, ERL_NIF_TERM term, CImgU8** cimgu8)
 {
+    ERL_NIF_TERM key;
+    ERL_NIF_TERM handle;
     MyCImg* mycimg_ptr;
-    int res = enif_get_resource(env, term, _ResType_MyCImg, (void**)&mycimg_ptr);
-    if (res) {
+
+    if (enif_make_existing_atom(env, "handle", &key, ERL_NIF_LATIN1)
+    &&  enif_get_map_value(env, term, key, &handle)
+    &&  enif_get_resource(env, handle, _ResType_MyCImg, (void**)&mycimg_ptr)) {
         *cimgu8 = mycimg_ptr->m_img;
+        return true;
     }
-    return res;
+    else {
+        return false;
+    }
 }
 
 ERL_NIF_TERM enif_make_mycimg_resource(ErlNifEnv* env, CImgU8* cimgu8)
@@ -234,6 +241,6 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_draw_box", 6, cimg_draw_box, 0},
 };
 
-ERL_NIF_INIT(Elixir.CImg, nif_funcs, load, NULL, NULL, NULL)
+ERL_NIF_INIT(Elixir.CImg.NIF, nif_funcs, load, NULL, NULL, NULL)
 
 /*** cimg_nif.cc **********************************************************}}}*/

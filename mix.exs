@@ -11,7 +11,6 @@ defmodule Cimg.MixProject do
       make_clean: ["clean"],
       compilers: [:elixir_make] ++ Mix.compilers,
       deps: deps(),
-      escript: escript(),
     ]
   end
 
@@ -26,15 +25,6 @@ defmodule Cimg.MixProject do
   defp deps do
     [
       {:elixir_make, "~> 0.6.2", runtime: false},
-    ]
-  end
-
-  defp escript do
-    app_name = "cimg"
-    [
-      main_module: Cimg,
-      #shebang: "#! escript \"%~f0\"\n",
-      #path: "#{app_name}.bat"
     ]
   end
 end
