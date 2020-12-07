@@ -11,7 +11,11 @@ endif
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
-NIF = $(PREFIX)/cimg_nif.dll
+ifeq ($(shell uname -s),Linux)
+    NIF = $(PREFIX)/cimg_nif.so
+else
+    NIF = $(PREFIX)/cimg_nif.dll
+endif
 
 CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -pedantic -fPIC
 LDFLAGS += -fPIC -shared -ljpeg #-Wl,--out-implib,a.lib
