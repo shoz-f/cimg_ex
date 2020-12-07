@@ -16,7 +16,7 @@ ifeq ($(shell uname -s),Linux)
 else
     NIF = $(PREFIX)/cimg_nif.dll
 endif
-    
+
 CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -pedantic -fPIC
 LDFLAGS += -fPIC -shared -ljpeg #-Wl,--out-implib,a.lib
 
