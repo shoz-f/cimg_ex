@@ -15,12 +15,13 @@ defmodule CImg do
   
     # stub implementations for NIFs (fallback)
     def cimg_create(_s),        do: raise "NIF cimg_create/1 not implemented"
-    def cimg_save(_h,_s),       do: raise "NIF cimg_save/2 not implemented"
-    def cimg_get_wh(_h),        do: raise "NIF cimg_get_wh/1 not implemented"
-    def cimg_resize(_h,_x,_y),  do: raise "NIF cimg_resize/3 not implemented"
-    def cimg_mirror(_h,_axis),  do: raise "NIF cimg_mirror/2 not implemented"
-    def cimg_get_gray(_h,_pn),  do: raise "NIF cimg_get_gray/2 not implemented"
-    def cimg_draw_box(_h,_x0,_y0,_x1,_y1,_rgb),
+    def cimg_save(_c,_s),       do: raise "NIF cimg_save/2 not implemented"
+    def cimg_get_wh(_c),        do: raise "NIF cimg_get_wh/1 not implemented"
+    def cimg_resize(_c,_x,_y),  do: raise "NIF cimg_resize/3 not implemented"
+    def cimg_mirror(_c,_axis),  do: raise "NIF cimg_mirror/2 not implemented"
+    def cimg_get_gray(_c,_pn),  do: raise "NIF cimg_get_gray/2 not implemented"
+    def cimg_get_flatbin(_c),   do: raise "NIF cimg_get_flatbin/1 not implemented"
+    def cimg_draw_box(_c,_x0,_y0,_x1,_y1,_rgb),
                                  do: raise "NIF cimg_draw_box/6 not implemented"
   end
 
@@ -50,6 +51,13 @@ defmodule CImg do
     end
   end
   
+  def get_flatbin(%CImg{}=cimg) do
+    with {:ok, bin} <- NIF.cimg_get_flatbin(cimg)
+    do
+      bin
+    end
+  end
+
   def draw_box(%CImg{}=cimg, x0, y0, x1, y1, {_r, _g, _b}=rgb) do
     NIF.cimg_draw_box(cimg, x0, y0, x1, y1, rgb)
   end
