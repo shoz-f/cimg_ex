@@ -1,11 +1,16 @@
 defmodule CImg do
   @moduledoc """
-  Documentation for `CImg`.
+  CImg image processing extention.
   """
   alias __MODULE__
+  
+  # image object
   defstruct handle: nil
 
   defmodule NIF do
+    @moduledoc """
+    NIFs entries.
+    """
     # loading NIF library
     @on_load :load_nif
     def load_nif do
@@ -25,6 +30,9 @@ defmodule CImg do
                                  do: raise "NIF cimg_draw_box/6 not implemented"
   end
 
+  @doc """
+  load the image file and create new image object.
+  """
   def create(fname) do
     with {:ok, h} <- NIF.cimg_create(fname)
     do
@@ -34,14 +42,23 @@ defmodule CImg do
     end
   end
 
+  @doc "save image object to the file"
   def save(%CImg{}=cimg, fname),    do: NIF.cimg_save(cimg, fname)
+  
+  @doc "get width and height of the image object"
   def get_wh(%CImg{}=cimg),         do: NIF.cimg_get_wh(cimg)
+  
+  @doc "resize the image object"
   def resize(%CImg{}=cimg, [x, y]), do: NIF.cimg_resize(cimg, x, y)
 
+  @doc "mirroring the image object on the axis"
   def mirror(%CImg{}=cimg, axis) when axis in [:x, :y] do
     NIF.cimg_mirror(cimg, axis)
   end
 
+  @doc """
+  create new gray image object from the image object
+  """
   def get_gray(%CImg{}=cimg, opt_pn \\ 0) do
     with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn)
     do
@@ -51,13 +68,25 @@ defmodule CImg do
     end
   end
   
-  def get_flatbin(%CImg{}=cimg) do
-    with {:ok, bin} <- NIF.cimg_get_flatbin(cimg)
+  @doc """
+  get the flat binary from the image object
+  """
+  def to_flatbin(%CImg{}=cimg) do
+    with \
+      {:ok, bin} <- NIF.cimg_get_flatbin(cimg),
+      shape      <- NIF.cimg_get_wh(cimg)
     do
-      bin
+      %{
+        descr: "<i1",
+        shape: shape,
+        data:  bin
+      }
     end
   end
 
+  @doc """
+  draw the colored box on the image object
+  """
   def draw_box(%CImg{}=cimg, x0, y0, x1, y1, {_r, _g, _b}=rgb) do
     NIF.cimg_draw_box(cimg, x0, y0, x1, y1, rgb)
   end
