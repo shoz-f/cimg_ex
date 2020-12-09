@@ -77,7 +77,7 @@ defmodule CImg do
       shape      <- NIF.cimg_get_wh(cimg)
     do
       %{
-        descr: "<i1",
+        descr: "<u1",
         shape: shape,
         data:  bin
       }
