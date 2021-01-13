@@ -17,7 +17,8 @@ else
     NIF = $(PREFIX)/cimg_nif.dll
 endif
 
-CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -pedantic -fPIC
+INC_CIMG = src/3rd_party/CImg
+CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -Isrc -I$(INC_CIMG) -pedantic -fPIC
 LDFLAGS += -fPIC -shared -ljpeg #-Wl,--out-implib,a.lib
 
 # Set Erlang-specific compile and linker flags
@@ -46,7 +47,14 @@ $(PREFIX):
 $(BUILD):
 	mkdir -p $@
 
+deps:
+	wget http://cimg.eu/files/CImg_latest.zip
+	unzip CImg_latest.zip -d tmp
+	mv tmp/CImg* $(INC_CIMG)
+	rm CImg_latest.zip
+	rmdir tmp
+
 clean:
 	$(RM) $(NIF) $(BUILD)/*.o
 
-.PHONY: all clean install
+.PHONY: all clean install deps
