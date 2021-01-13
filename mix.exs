@@ -9,8 +9,8 @@ defmodule Cimg.MixProject do
       start_permanent: Mix.env() == :prod,
       make_executable: "make",
       make_clean: ["clean"],
-      compilers: [:elixir_make] ++ Mix.compilers,
-      deps: deps(),
+      compilers: [:elixir_make] ++ Mix.compilers(),
+      deps: deps()
     ]
   end
 
@@ -24,7 +24,7 @@ defmodule Cimg.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_make, "~> 0.6.2", runtime: false},
+      {:elixir_make, "~> 0.6.2", runtime: false}
     ]
   end
 end
