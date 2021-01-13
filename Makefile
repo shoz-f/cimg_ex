@@ -17,8 +17,8 @@ else
     NIF = $(PREFIX)/cimg_nif.dll
 endif
 
-INC_CIMG = src/3rd_party/CImg
-CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -Isrc -I$(INC_CIMG) -pedantic -fPIC
+LIB_CIMG = src/3rd_party/CImg
+CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -pedantic -fPIC
 LDFLAGS += -fPIC -shared -ljpeg #-Wl,--out-implib,a.lib
 
 # Set Erlang-specific compile and linker flags
@@ -31,7 +31,7 @@ OBJ = $(SRC:src/%.cc=$(BUILD)/%.o)
 
 all: install
 
-install: $(PREFIX) $(BUILD) $(NIF)
+install: $(PREFIX) $(BUILD) $(LIB_CIMG) $(NIF)
 
 $(OBJ): $(HEADERS) Makefile
 
@@ -47,10 +47,10 @@ $(PREFIX):
 $(BUILD):
 	mkdir -p $@
 
-deps:
+$(LIB_CIMG):
 	wget http://cimg.eu/files/CImg_latest.zip
 	unzip CImg_latest.zip -d tmp
-	mv tmp/CImg* $(INC_CIMG)
+	mv tmp/CImg* $(LIB_CIMG)
 	rm CImg_latest.zip
 	rmdir tmp
 
