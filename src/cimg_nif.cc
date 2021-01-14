@@ -133,6 +133,22 @@ ERL_NIF_TERM cimg_get_wh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return enif_make_list2(env, enif_make_int(env, width), enif_make_int(env, height));
 }
 
+ERL_NIF_TERM cimg_get_whs(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    CImgU8* img;
+
+    if (argc != 1
+    ||  !enif_get_cimgu8(env, argv[0], &img)) {
+        return enif_make_badarg(env);
+    }
+
+    int width    = img->width();
+    int height   = img->height();
+    int spectrum = img->spectrum();
+
+    return enif_make_list3(env, enif_make_int(env, width), enif_make_int(env, height), enif_make_int(env, spectrum));
+}
+
 ERL_NIF_TERM cimg_resize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     CImgU8* img;
@@ -260,6 +276,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_create",      1, cimg_create,      0},
     {"cimg_save",        2, cimg_save,        0},
     {"cimg_get_wh",      1, cimg_get_wh,      0},
+    {"cimg_get_whs",     1, cimg_get_whs,     0},
     {"cimg_resize",      3, cimg_resize,      0},
     {"cimg_mirror",      2, cimg_mirror,      0},
     {"cimg_get_gray",    2, cimg_get_gray,    0},

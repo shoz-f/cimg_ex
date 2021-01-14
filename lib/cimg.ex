@@ -22,6 +22,7 @@ defmodule CImg do
     def cimg_create(_s), do: raise("NIF cimg_create/1 not implemented")
     def cimg_save(_c, _s), do: raise("NIF cimg_save/2 not implemented")
     def cimg_get_wh(_c), do: raise("NIF cimg_get_wh/1 not implemented")
+    def cimg_get_whs(_c), do: raise("NIF cimg_get_whs/1 not implemented")
     def cimg_resize(_c, _x, _y), do: raise("NIF cimg_resize/3 not implemented")
     def cimg_mirror(_c, _axis), do: raise("NIF cimg_mirror/2 not implemented")
     def cimg_get_gray(_c, _pn), do: raise("NIF cimg_get_gray/2 not implemented")
@@ -48,6 +49,9 @@ defmodule CImg do
   @doc "get width and height of the image object"
   def get_wh(%CImg{} = cimg), do: NIF.cimg_get_wh(cimg)
 
+  @doc "get width, height and spectrum of the image object"
+  def get_whs(%CImg{} = cimg), do: NIF.cimg_get_whs(cimg)
+
   @doc "resize the image object"
   def resize(%CImg{} = cimg, [x, y]), do: NIF.cimg_resize(cimg, x, y)
 
@@ -72,7 +76,7 @@ defmodule CImg do
   """
   def to_flatbin(%CImg{} = cimg) do
     with {:ok, bin} <- NIF.cimg_get_flatbin(cimg),
-         shape <- NIF.cimg_get_wh(cimg) do
+         shape <- NIF.cimg_get_whs(cimg) do
       %{
         descr: "<u1",
         shape: shape,
