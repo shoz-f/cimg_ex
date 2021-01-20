@@ -26,15 +26,15 @@ static ErlNifResourceType* _ResType_MyCImg = NULL;
 
 struct MyCImg {
     //std::mutex   m_mutex;
-    CImgU8*      m_img;
+    CImgU8*      m_imgu8;
 };
 
 void cimg_destroy(ErlNifEnv* env, void* ptr)
 {
     MyCImg* mycimg_ptr = reinterpret_cast<MyCImg*>(ptr);
 
-    if (!mycimg_ptr->m_img) {
-        delete mycimg_ptr->m_img;
+    if (!mycimg_ptr->m_imgu8) {
+        delete mycimg_ptr->m_imgu8;
     }
 }
 
@@ -55,7 +55,7 @@ int enif_get_cimgu8(ErlNifEnv* env, ERL_NIF_TERM term, CImgU8** cimgu8)
     if (enif_make_existing_atom(env, "handle", &key, ERL_NIF_LATIN1)
     &&  enif_get_map_value(env, term, key, &handle)
     &&  enif_get_resource(env, handle, _ResType_MyCImg, (void**)&mycimg_ptr)) {
-        *cimgu8 = mycimg_ptr->m_img;
+        *cimgu8 = mycimg_ptr->m_imgu8;
         return true;
     }
     else {
@@ -69,7 +69,7 @@ ERL_NIF_TERM enif_make_mycimg_resource(ErlNifEnv* env, CImgU8* cimgu8)
     if (!mycimg_ptr) {
         return enif_make_tuple2(env, enifError(env), enif_make_string(env, "Faild to allocate resource", ERL_NIF_LATIN1));
     }
-    mycimg_ptr->m_img = cimgu8;
+    mycimg_ptr->m_imgu8 = cimgu8;
 
     ERL_NIF_TERM term = enif_make_resource(env, mycimg_ptr);
     enif_release_resource(mycimg_ptr);
@@ -133,7 +133,7 @@ ERL_NIF_TERM cimg_get_wh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return enif_make_list2(env, enif_make_int(env, width), enif_make_int(env, height));
 }
 
-ERL_NIF_TERM cimg_get_whs(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM cimg_get_whc(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     CImgU8* img;
 
@@ -205,7 +205,7 @@ ERL_NIF_TERM cimg_get_gray(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     return enif_make_mycimg_resource(env, gray);
 }
 
-ERL_NIF_TERM cimg_get_flatbin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+ERL_NIF_TERM cimg_get_flat_u1(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
     CImgU8* img;
 
@@ -221,6 +221,31 @@ ERL_NIF_TERM cimg_get_flatbin(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[
         cimg_forXY(img_ref, x, y) {
         cimg_forC(img_ref, c) {
             *buff++ = img_ref(x, y, c);
+        }}
+
+        return enif_make_tuple2(env, enifOk(env), binary);
+    }
+    else {
+        return enif_make_tuple2(env, enifError(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+    }
+}
+
+ERL_NIF_TERM cimg_get_flat_f4(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+{
+    CImgU8* img;
+
+    if (argc != 1
+    ||  !enif_get_cimgu8(env, argv[0], &img)) {
+        return enif_make_badarg(env);
+    }
+    
+    ERL_NIF_TERM binary;
+    float* buff = reinterpret_cast<float*>(enif_make_new_binary(env, 4*img->size(), &binary));
+    if (buff) {
+        CImgU8& img_ref = *img;
+        cimg_forXY(img_ref, x, y) {
+        cimg_forC(img_ref, c) {
+            *buff++ = img_ref(x, y, c)/255.0;   // normalize into 0.0-1.0
         }}
 
         return enif_make_tuple2(env, enifOk(env), binary);
@@ -273,15 +298,16 @@ ERL_NIF_TERM cimg_draw_box(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 // Let's define the array of ErlNifFunc beforehand:
 static ErlNifFunc nif_funcs[] = {
     // {erl_function_name, erl_function_arity, c_function, dirty_flags}
-    {"cimg_create",      1, cimg_create,      0},
-    {"cimg_save",        2, cimg_save,        0},
-    {"cimg_get_wh",      1, cimg_get_wh,      0},
-    {"cimg_get_whs",     1, cimg_get_whs,     0},
-    {"cimg_resize",      3, cimg_resize,      0},
-    {"cimg_mirror",      2, cimg_mirror,      0},
-    {"cimg_get_gray",    2, cimg_get_gray,    0},
-    {"cimg_get_flatbin", 1, cimg_get_flatbin, 0},
-    {"cimg_draw_box",    6, cimg_draw_box,    0},
+    {"cimg_create",         1, cimg_create,      0},
+    {"cimg_save",           2, cimg_save,        0},
+    {"cimg_get_wh",         1, cimg_get_wh,      0},
+    {"cimg_get_whc",        1, cimg_get_whc,     0},
+    {"cimg_resize",         3, cimg_resize,      0},
+    {"cimg_mirror",         2, cimg_mirror,      0},
+    {"cimg_get_gray",       2, cimg_get_gray,    0},
+    {"cimg_get_flatbin",    1, cimg_get_flat_u1, 0},
+    {"cimg_get_flatnorm",   1, cimg_get_flat_f4, 0},
+    {"cimg_draw_box",       6, cimg_draw_box,    0},
 };
 
 ERL_NIF_INIT(Elixir.CImg.NIF, nif_funcs, load, NULL, NULL, NULL)

@@ -22,11 +22,12 @@ defmodule CImg do
     def cimg_create(_s), do: raise("NIF cimg_create/1 not implemented")
     def cimg_save(_c, _s), do: raise("NIF cimg_save/2 not implemented")
     def cimg_get_wh(_c), do: raise("NIF cimg_get_wh/1 not implemented")
-    def cimg_get_whs(_c), do: raise("NIF cimg_get_whs/1 not implemented")
+    def cimg_get_whc(_c), do: raise("NIF cimg_get_whc/1 not implemented")
     def cimg_resize(_c, _x, _y), do: raise("NIF cimg_resize/3 not implemented")
     def cimg_mirror(_c, _axis), do: raise("NIF cimg_mirror/2 not implemented")
     def cimg_get_gray(_c, _pn), do: raise("NIF cimg_get_gray/2 not implemented")
     def cimg_get_flatbin(_c), do: raise("NIF cimg_get_flatbin/1 not implemented")
+    def cimg_get_flatnorm(_c), do: raise("NIF cimg_get_flatnorm/1 not implemented")
 
     def cimg_draw_box(_c, _x0, _y0, _x1, _y1, _rgb),
       do: raise("NIF cimg_draw_box/6 not implemented")
@@ -50,7 +51,7 @@ defmodule CImg do
   def get_wh(%CImg{} = cimg), do: NIF.cimg_get_wh(cimg)
 
   @doc "get width, height and spectrum of the image object"
-  def get_whs(%CImg{} = cimg), do: NIF.cimg_get_whs(cimg)
+  def get_whs(%CImg{} = cimg), do: NIF.cimg_get_whc(cimg)
 
   @doc "resize the image object"
   def resize(%CImg{} = cimg, [x, y]), do: NIF.cimg_resize(cimg, x, y)
@@ -76,9 +77,23 @@ defmodule CImg do
   """
   def to_flatbin(%CImg{} = cimg) do
     with {:ok, bin} <- NIF.cimg_get_flatbin(cimg),
-         shape <- NIF.cimg_get_whs(cimg) do
+         shape <- NIF.cimg_get_whc(cimg) do
       %{
         descr: "<u1",
+        shape: shape,
+        data: bin
+      }
+    end
+  end
+
+  @doc """
+  get the normalized flat binary from the image object
+  """
+  def to_flatnorm(%CImg{} = cimg) do
+    with {:ok, bin} <- NIF.cimg_get_flatnorm(cimg),
+         shape <- NIF.cimg_get_whc(cimg) do
+      %{
+        descr: "<f4",
         shape: shape,
         data: bin
       }
