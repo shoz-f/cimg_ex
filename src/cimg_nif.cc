@@ -13,8 +13,10 @@
 #include <string>
 #include <erl_nif.h>
 
-#include "myCImg.h"
-typedef CImg<unsigned char> CImgU8;
+#define cimg_display    0
+#include "CImgEx.h"
+
+using namespace cimg_library;
 
 /***** MACRO *****/
 #define enifOk(env)     enif_make_atom(env, "ok")
