@@ -5,69 +5,66 @@ defmodule CImg do
   alias __MODULE__
 
   # image object
-  defstruct handle: nil
-
-  defmodule NIF do
-    @moduledoc """
-    NIFs entries.
-    """
-    # loading NIF library
-    @on_load :load_nif
-    def load_nif do
-      nif_file = Application.app_dir(:cimg, "priv/cimg_nif")
-      :erlang.load_nif(nif_file, 0)
-    end
-
-    # stub implementations for NIFs (fallback)
-    def cimg_create(_s), do: raise("NIF cimg_create/1 not implemented")
-    def cimg_save(_c, _s), do: raise("NIF cimg_save/2 not implemented")
-    def cimg_get_wh(_c), do: raise("NIF cimg_get_wh/1 not implemented")
-    def cimg_get_whc(_c), do: raise("NIF cimg_get_whc/1 not implemented")
-    def cimg_resize(_c, _x, _y), do: raise("NIF cimg_resize/3 not implemented")
-    def cimg_mirror(_c, _axis), do: raise("NIF cimg_mirror/2 not implemented")
-    def cimg_get_gray(_c, _pn), do: raise("NIF cimg_get_gray/2 not implemented")
-    def cimg_get_flatbin(_c), do: raise("NIF cimg_get_flatbin/1 not implemented")
-    def cimg_get_flatnorm(_c), do: raise("NIF cimg_get_flatnorm/1 not implemented")
-
-    def cimg_draw_box(_c, _x0, _y0, _x1, _y1, _rgb),
-      do: raise("NIF cimg_draw_box/6 not implemented")
-  end
+  defstruct handle: nil, shape: nil
 
   @doc """
   load the image file and create new image object.
   """
   def create(fname) do
-    with {:ok, h} <- NIF.cimg_create(fname) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_load(fname)
+    do
       %CImg{
-        handle: h
+        handle: h,
+        shape:  shape
+      }
+    end
+  end
+  
+  def create(x, y, z, c, val) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_create(x, y, z, c, val) do
+      %CImg{
+        handle: h,
+        shape:  shape
       }
     end
   end
 
   @doc "save image object to the file"
-  def save(%CImg{} = cimg, fname), do: NIF.cimg_save(cimg, fname)
-
-  @doc "get width and height of the image object"
-  def get_wh(%CImg{} = cimg), do: NIF.cimg_get_wh(cimg)
-
-  @doc "get width, height and spectrum of the image object"
-  def get_whs(%CImg{} = cimg), do: NIF.cimg_get_whc(cimg)
+  defdelegate save(cimg, fname),
+    to: CImgNIF, as: :cimg_save
+  defdelegate get_wh(cimg),
+    to: CImgNIF, as: :cimg_get_wh
+  defdelegate get_whs(cimg),
+    to: CImgNIF, as: :cimg_get_whc
 
   @doc "resize the image object"
-  def resize(%CImg{} = cimg, [x, y]), do: NIF.cimg_resize(cimg, x, y)
+  def resize(cimg, [x, y]), do: CImgNIF.cimg_resize(cimg, x, y)
+
+  defdelegate blur(cimg, sigma, boundary_conditions \\ true, is_gaussian \\ true),
+    to: CImgNIF, as: :cimg_blur
 
   @doc "mirroring the image object on the axis"
-  def mirror(%CImg{} = cimg, axis) when axis in [:x, :y] do
-    NIF.cimg_mirror(cimg, axis)
+  def mirror(cimg, axis) when axis in [:x, :y] do
+    CImgNIF.cimg_mirror(cimg, axis)
   end
 
   @doc """
   create new gray image object from the image object
   """
-  def get_gray(%CImg{} = cimg, opt_pn \\ 0) do
-    with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn) do
+  def get_gray(cimg, opt_pn \\ 0) do
+    with {:ok, gray, [shape]} <- CImgNIF.cimg_get_gray(cimg, opt_pn) do
       %CImg{
-        handle: gray
+        handle: gray,
+        shape:  shape
+      }
+    end
+  end
+
+  def get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions \\ 0) do
+    with {:ok, crop, [shape]} <- CImgNIF.cimg_get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions) do
+      %CImg{
+        handle: crop,
+        shape:  shape
       }
     end
   end
@@ -76,8 +73,8 @@ defmodule CImg do
   get the flat binary from the image object
   """
   def to_flatbin(%CImg{} = cimg) do
-    with {:ok, bin} <- NIF.cimg_get_flatbin(cimg),
-         shape <- NIF.cimg_get_whc(cimg) do
+    with {:ok, bin} <- CImgNIF.cimg_get_flatbin(cimg),
+         shape <- CImgNIF.cimg_get_whc(cimg) do
       %{
         descr: "<u1",
         shape: shape,
@@ -90,8 +87,8 @@ defmodule CImg do
   get the normalized flat binary from the image object
   """
   def to_flatnorm(%CImg{} = cimg) do
-    with {:ok, bin} <- NIF.cimg_get_flatnorm(cimg),
-         shape <- NIF.cimg_get_whc(cimg) do
+    with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg),
+         shape <- CImgNIF.cimg_get_whc(cimg) do
       %{
         descr: "<f4",
         shape: shape,
@@ -103,7 +100,128 @@ defmodule CImg do
   @doc """
   draw the colored box on the image object
   """
-  def draw_box(%CImg{} = cimg, x0, y0, x1, y1, {_r, _g, _b} = rgb) do
-    NIF.cimg_draw_box(cimg, x0, y0, x1, y1, rgb)
+  def draw_box(cimg, x0, y0, x1, y1, {_r, _g, _b} = rgb) do
+    CImgNIF.cimg_draw_box(cimg, x0, y0, x1, y1, rgb)
   end
+  
+  defdelegate display(cimg, disp),
+    to: CImgNIF, as: :cimg_display
+  defdelegate fill(cimg, val),
+    to: CImgNIF, as: :cimg_fill
+  defdelegate draw_graph(cimg, data, color, opacity \\ 1.0, plot_type \\ 1, vertex_type \\ 1, ymin \\ 0.0, ymax \\ 0.0, pattern \\ 0xFFFFFFFF),
+    to: CImgNIF, as: :cimg_draw_graph
+  defdelegate set(val, cimg, x, y \\ 0, z \\ 0, c \\ 0),
+    to: CImgNIF, as: :cimg_set
+  defdelegate get(cimg, x, y \\ 0, z \\ 0, c \\ 0),
+    to: CImgNIF, as: :cimg_get
+  defdelegate assign(cimg, cimg_src),
+    to: CImgNIF, as: :cimg_assign
+  defdelegate draw_circle(cimg, x0, y0, radius, color, opacity \\ 1.0),
+    to: CImgNIF, as: :cimg_draw_circle
+  defdelegate draw_circle(cimg, x0, y0, radius, color, opacity, pattern),
+    to: CImgNIF, as: :cimg_draw_circle
+  defdelegate shape(cimg),
+    to: CImgNIF, as: :cimg_shape
+  defdelegate transfer(cimg, cimg_src, address),
+    to: CImgNIF, as: :cimg_transfer
+end
+
+
+defmodule CImgDisplay do
+  alias __MODULE__
+
+  defstruct handle: nil
+
+  def create(%CImg{} = cimg, title \\ "", normalization \\ 3, is_fullscreen \\ false, is_closed \\ false) do
+    with {:ok, h, _} <- CImgNIF.cimgdisplay_u8(cimg, title, normalization, is_fullscreen, is_closed) do
+      %CImgDisplay{
+        handle: h
+      }
+    end
+  end
+  
+  defdelegate wait(cimgdisplay),
+    to: CImgNIF, as: :cimgdisplay_wait
+  defdelegate wait(cimgdisplay, milliseconds),
+    to: CImgNIF, as: :cimgdisplay_wait
+  defdelegate is_closed(cimgdisplay),
+    to: CImgNIF, as: :cimgdisplay_is_closed
+  defdelegate button(cimgdisplay),
+    to: CImgNIF, as: :cimgdisplay_button
+  defdelegate mouse_y(cimgdisplay),
+    to: CImgNIF, as: :cimgdisplay_mouse_y
+end
+
+
+defmodule CImgNIF do
+  @moduledoc """
+  NIFs entries.
+  """
+  # loading NIF library
+  @on_load :load_nif
+  def load_nif do
+    nif_file = Application.app_dir(:cimg, "priv/cimg_nif")
+    :erlang.load_nif(nif_file, 0)
+  end
+
+  # stub implementations for NIFs (fallback)
+  def cimg_create(_x, _y, _z, _c, _v),
+    do: raise("NIF cimg_create/5 not implemented")
+  def cimg_load(_s),
+    do: raise("NIF cimg_load/1 not implemented")
+  def cimg_save(_c, _s),
+    do: raise("NIF cimg_save/2 not implemented")
+  def cimg_get_wh(_c),
+    do: raise("NIF cimg_get_wh/1 not implemented")
+  def cimg_get_whc(_c),
+    do: raise("NIF cimg_get_whc/1 not implemented")
+  def cimg_resize(_c, _x, _y),
+    do: raise("NIF cimg_resize/3 not implemented")
+  def cimg_mirror(_c, _axis),
+    do: raise("NIF cimg_mirror/2 not implemented")
+  def cimg_get_gray(_c, _pn),
+    do: raise("NIF cimg_get_gray/2 not implemented")
+  def cimg_blur(_c, _s, _b, _g),
+    do: raise("NIF cimg_blur/4 not implemented")
+  def cimg_get_crop(_c, _x0, _y0, _z0, _c0, _x1, _y1, _z1, _c1, _b),
+    do: raise("NIF cimg_get_crop/10 not implemented")
+  def cimg_fill(_c, _val),
+    do: raise("NIF cimg_fill/2 not implemented")
+  def cimg_draw_graph(_c, _d, _color, _o, _p, _v, _ymin, _ymax, _pat),
+    do: raise("NIF cimg_draw_graph/9 not implemented")
+  def cimg_get_flatbin(_c),
+    do: raise("NIF cimg_get_flatbin/1 not implemented")
+  def cimg_get_flatnorm(_c),
+    do: raise("NIF cimg_get_flatnorm/1 not implemented")
+  def cimg_draw_box(_c, _x0, _y0, _x1, _y1, _rgb),
+    do: raise("NIF cimg_draw_box/6 not implemented")
+  def cimg_display(_cimgu8, _disp),
+    do: raise("NIF cimg_display/2 not implemented")
+  def cimg_set(_val, _cimgu8, _x, _y, _z, _c),
+    do: raise("NIF cimg_set/6 not implemented")
+  def cimg_get(_cimgu8, _x, _y, _z, _c),
+    do: raise("NIF cimg_get/5 not implemented")
+  def cimg_assign(_cimgu8, _cimgu8_src),
+    do: raise("NIF cimg_assign/2 not implemented")
+  def cimg_draw_circle(_cimg8, _x0, _y0, _radius, _color, _opacity),
+    do: raise("NIF cimg_draw_circle/6 not implemented")
+  def cimg_draw_circle(_cimg8, _x0, _y0, _radius, _color, _opacity, _pattern),
+    do: raise("NIF cimg_draw_circle/7 not implemented")
+  def cimg_shape(_cimgu8),
+    do: raise("NIF cimg_shape/1 not implemented")
+  def cimg_transfer(_cimgu8, _cimgu8_src, _address),
+    do: raise("NIF cimg_transfer/3 not implemented")
+  
+  def cimgdisplay_u8(_cimgu8, _title, _normalization, _is_fullscreen, _is_close),
+    do: raise("NIF cimgdisplay_u8/5 not implemented")
+  def cimgdisplay_wait(_disp),
+    do: raise("NIF cimgdisplay_wait/1 not implemented")
+  def cimgdisplay_wait(_disp, _milliseconds),
+    do: raise("NIF cimgdisplay_wait/2 not implemented")
+  def cimgdisplay_is_closed(_disp),
+    do: raise("NIF cimgdisplay_is_closed/1 not implemented")
+  def cimgdisplay_button(_disp),
+    do: raise("NIF cimgdisplay_button/1 not implemented")
+  def cimgdisplay_mouse_y(_disp),
+    do: raise("NIF cimgdisplay_mouse_y/1 not implemented")
 end

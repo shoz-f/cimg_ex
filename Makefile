@@ -20,7 +20,7 @@ endif
 LIB_CIMG = src/3rd_party/CImg
 #CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -pedantic -fPIC
 CFLAGS  ?= -O2 -Wall -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -pedantic -fPIC
-LDFLAGS += -fPIC -shared #-ljpeg #-Wl,--out-implib,a.lib
+LDFLAGS += -fPIC -shared -lgdi32 #-ljpeg #-Wl,--out-implib,a.lib
 
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS  ?= -I"$(ERL_EI_INCLUDE_DIR)"

@@ -24,8 +24,6 @@
 
 #include "CImg.h"
 
-typedef cimg_library::CImg<unsigned char> CImgU8;
-
 #else
 /**************************************************************************}}}*/
 /*** CImg Plugins:                                                          ***/
