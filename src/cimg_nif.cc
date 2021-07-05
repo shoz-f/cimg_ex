@@ -125,7 +125,7 @@ struct NifCImgDisplay {
             return enif_make_badarg(env);
         }
         std::string title((const char*)bin.data, bin.size);
-        
+
         CImgDisplay* display;
         try {
             display = new CImgDisplay(*img, title.c_str(), normalization, is_fullscreen, is_closed);
@@ -133,10 +133,10 @@ struct NifCImgDisplay {
         catch (CImgException& e) {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
         }
-        
+
         return Resource<CImgDisplay>::make_resource(env, display, enif_make_list(env, 0));
     }
-    
+
     static ERL_NIF_TERM wait(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgDisplay *display;
@@ -147,10 +147,10 @@ struct NifCImgDisplay {
         }
 
         display->wait();
-        
+
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM wait_time(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgDisplay *display;
@@ -163,10 +163,10 @@ struct NifCImgDisplay {
         }
 
         display->wait(milliseconds);
-        
+
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM is_closed(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgDisplay* display;
@@ -175,10 +175,10 @@ struct NifCImgDisplay {
         ||  !enif_get_display(env, argv[0], &display)) {
             return enif_make_badarg(env);
         }
-        
+
         return (display->is_closed()) ? enif_make_true(env) : enif_make_false(env);
     }
-    
+
     static ERL_NIF_TERM button(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgDisplay* display;
@@ -187,7 +187,7 @@ struct NifCImgDisplay {
         ||  !enif_get_display(env, argv[0], &display)) {
             return enif_make_badarg(env);
         }
-        
+
         return enif_make_uint(env, display->button());
     }
 
@@ -199,7 +199,7 @@ struct NifCImgDisplay {
         ||  !enif_get_display(env, argv[0], &display)) {
             return enif_make_badarg(env);
         }
-        
+
         return enif_make_int(env, display->mouse_y());
     }
 };
@@ -258,7 +258,7 @@ struct NifCImg {
 
         return enif_make_image(env, img);
     }
-    
+
     static ERL_NIF_TERM load(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         ErlNifBinary bin;
@@ -344,7 +344,7 @@ struct NifCImg {
             enif_make_int(env, img->depth()),
             enif_make_int(env, img->spectrum()));
     }
-    
+
     static ERL_NIF_TERM resize(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
@@ -400,14 +400,14 @@ struct NifCImg {
 
         return enif_make_image(env, gray);
     }
-    
+
     static ERL_NIF_TERM blur(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
         double sigma;
         bool   boundary_conditions;
         bool   is_gaussian;
-        
+
         if (argc != 4
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_double(env, argv[1], &sigma)
@@ -415,19 +415,19 @@ struct NifCImg {
         ||  !enif_get_bool(env, argv[3], &is_gaussian)) {
             return enif_make_badarg(env);
         }
-        
+
         img->blur(sigma, boundary_conditions, is_gaussian);
 
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM get_crop(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
         int x0, y0, z0, c0;
         int x1, y1, z1, c1;
         unsigned int boundary_conditions;
-        
+
         if (argc != 10
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_int(env, argv[1], &x0)
@@ -441,7 +441,7 @@ struct NifCImg {
         ||  !enif_get_uint(env, argv[9], &boundary_conditions)) {
             return enif_make_badarg(env);
         }
-        
+
         CImgT* crop;
         try {
             crop = new CImgT(img->get_crop(x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions));
@@ -449,7 +449,7 @@ struct NifCImg {
         catch (CImgException& e) {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
         }
-        
+
         return enif_make_image(env, crop);
     }
 
@@ -457,13 +457,13 @@ struct NifCImg {
     {
         CImgT* img;
         T val;
-        
+
         if (argc != 2
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_value(env, argv[1], &val)) {
             return enif_make_badarg(env);
         }
-        
+
         img->fill(val);
 
         return argv[0];
@@ -493,12 +493,12 @@ struct NifCImg {
         ||  !enif_get_uint(env, argv[8], &pattern)) {
             return enif_make_badarg(env);
         }
-        
+
         img->draw_graph(*data, color, opacity, plot_type, vertex_type, ymin, ymax, pattern);
 
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM draw_circle_filled(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
@@ -507,7 +507,7 @@ struct NifCImg {
         int radius;
         unsigned char color[3];
         double opacity;
-        
+
         if (argc != 6
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_int(env, argv[1], &x0)
@@ -517,7 +517,7 @@ struct NifCImg {
         ||  !enif_get_number(env, argv[5], &opacity)) {
             return enif_make_badarg(env);
         }
-        
+
         img->draw_circle(x0, y0, radius, color, opacity);
 
         return argv[0];
@@ -532,7 +532,7 @@ struct NifCImg {
         unsigned char color[3];
         double opacity;
         unsigned int pattern;
-        
+
         if (argc != 7
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_int(env, argv[1], &x0)
@@ -543,7 +543,7 @@ struct NifCImg {
         ||  !enif_get_uint(env, argv[6], &pattern)) {
             return enif_make_badarg(env);
         }
-        
+
         img->draw_circle(x0, y0, radius, color, opacity, pattern);
 
         return argv[0];
@@ -554,13 +554,13 @@ struct NifCImg {
 #if cimg_display != 0
         CImgT* img;
         CImgDisplay* disp;
-        
+
         if (argc != 2
         ||  !enif_get_image(env, argv[0], &img)
         ||  !NifCImgDisplay::enif_get_display(env, argv[1], &disp)) {
             return enif_make_badarg(env);
         }
-        
+
         img->display(*disp);
 #endif
 
@@ -655,7 +655,7 @@ struct NifCImg {
 
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM size(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
@@ -664,10 +664,10 @@ struct NifCImg {
         ||  !enif_get_image(env, argv[0], &img)) {
           return enif_make_badarg(env);
         }
-        
+
         return enif_make_ulong(env, img->size());
     }
-    
+
     static ERL_NIF_TERM transpose(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
@@ -676,12 +676,12 @@ struct NifCImg {
         ||  !enif_get_image(env, argv[0], &img)) {
           return enif_make_badarg(env);
         }
-        
+
         img->transpose();
 
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM set(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
@@ -697,9 +697,9 @@ struct NifCImg {
         ||  !enif_get_uint(env, argv[5], &c)) {
             return enif_make_badarg(env);
         }
-        
+
         (*img)(x, y, z, c) = val;
-        
+
         return argv[0];
     }
 
@@ -719,7 +719,7 @@ struct NifCImg {
         }
 
         val = (*img)(x, y, z, c);
- 
+
         return enif_make_value(env, val);
     }
 
@@ -738,7 +738,7 @@ struct NifCImg {
 
         return argv[0];
     }
-    
+
     static ERL_NIF_TERM transfer(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* dst;
@@ -768,7 +768,7 @@ struct NifCImg {
             ||  !enif_get_pos(env, pair[1], p)) {
                 continue;
             }
-            
+
             if (dst->containsXYZC(q[0], q[1], q[2]) && src->containsXYZC(p[0], p[1], p[2])) {
                 cimg_forC(*src, c) {
                     (*dst)(q[0], q[1], q[2], c) = (*src)(p[0], p[1], p[2], c);

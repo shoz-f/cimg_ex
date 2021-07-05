@@ -5,28 +5,19 @@ defmodule CImg do
   alias __MODULE__
 
   # image object
-  defstruct handle: nil, shape: nil
+  defstruct handle: nil, shape: {}
 
   @doc """
   load the image file and create new image object.
   """
   def create(fname) do
-    with {:ok, h, [shape]} <- CImgNIF.cimg_load(fname)
-    do
-      %CImg{
-        handle: h,
-        shape:  shape
-      }
-    end
+    with {:ok, h, [shape]} <- CImgNIF.cimg_load(fname),
+      do: %CImg{handle: h, shape: shape}
   end
   
   def create(x, y, z, c, val) do
-    with {:ok, h, [shape]} <- CImgNIF.cimg_create(x, y, z, c, val) do
-      %CImg{
-        handle: h,
-        shape:  shape
-      }
-    end
+    with {:ok, h, [shape]} <- CImgNIF.cimg_create(x, y, z, c, val),
+      do: %CImg{handle: h, shape: shape}
   end
 
   @doc "save image object to the file"
@@ -52,21 +43,13 @@ defmodule CImg do
   create new gray image object from the image object
   """
   def get_gray(cimg, opt_pn \\ 0) do
-    with {:ok, gray, [shape]} <- CImgNIF.cimg_get_gray(cimg, opt_pn) do
-      %CImg{
-        handle: gray,
-        shape:  shape
-      }
-    end
+    with {:ok, gray, [shape]} <- CImgNIF.cimg_get_gray(cimg, opt_pn),
+      do: %CImg{handle: gray, shape: shape}
   end
 
   def get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions \\ 0) do
-    with {:ok, crop, [shape]} <- CImgNIF.cimg_get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions) do
-      %CImg{
-        handle: crop,
-        shape:  shape
-      }
-    end
+    with {:ok, crop, [shape]} <- CImgNIF.cimg_get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions),
+      do: %CImg{handle: crop, shape: shape}
   end
 
   @doc """
@@ -133,11 +116,8 @@ defmodule CImgDisplay do
   defstruct handle: nil
 
   def create(%CImg{} = cimg, title \\ "", normalization \\ 3, is_fullscreen \\ false, is_closed \\ false) do
-    with {:ok, h, _} <- CImgNIF.cimgdisplay_u8(cimg, title, normalization, is_fullscreen, is_closed) do
-      %CImgDisplay{
-        handle: h
-      }
-    end
+    with {:ok, h, _} <- CImgNIF.cimgdisplay_u8(cimg, title, normalization, is_fullscreen, is_closed),
+      do: %CImgDisplay{handle: h}
   end
   
   defdelegate wait(cimgdisplay),
