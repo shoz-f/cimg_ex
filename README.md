@@ -1,4 +1,4 @@
-# Cimg
+# eCImg
 
 **TODO: Add description**
 
@@ -14,8 +14,8 @@ def deps do
   ]
 end
 ```
+## License
+The original CImg Library in "src/3rd_party" is licensed under the CeCILL-C/CeCILL. To see the license text in the directory
+more detail.
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/cimg](https://hexdocs.pm/cimg).
-
+eCImg - CImg Elixir TTL - is licensed under the Apache License Version 2.0.
