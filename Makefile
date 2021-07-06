@@ -18,8 +18,9 @@ else
 endif
 
 LIB_CIMG = src/3rd_party/CImg
+LIB_STB  = src/3rd_party/stb
 #CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -pedantic -fPIC
-CFLAGS  ?= -O2 -Wall -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -pedantic -fPIC
+CFLAGS  ?= -O2 -Wall -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -I$(LIB_STB) -pedantic -fPIC
 LDFLAGS += -fPIC -shared -lgdi32 #-ljpeg #-Wl,--out-implib,a.lib
 
 # Set Erlang-specific compile and linker flags
@@ -32,7 +33,7 @@ OBJ = $(SRC:src/%.cc=$(BUILD)/%.o)
 
 all: install
 
-install: $(PREFIX) $(BUILD) $(LIB_CIMG) $(NIF)
+install: $(PREFIX) $(BUILD) $(LIB_CIMG) $(LIB_STB) $(NIF)
 
 $(OBJ): $(HEADERS) Makefile
 
@@ -54,6 +55,9 @@ $(LIB_CIMG):
 	mv tmp/CImg* $(LIB_CIMG)
 	rm CImg_latest.zip
 	rmdir tmp
+
+$(LIB_STB):
+	git clone https://github.com/nothings/stb.git $(LIB_STB)
 
 clean:
 	$(RM) $(NIF) $(BUILD)/*.o

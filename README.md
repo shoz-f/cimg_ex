@@ -15,7 +15,9 @@ def deps do
 end
 ```
 ## License
-The original CImg Library in "src/3rd_party" is licensed under the CeCILL-C/CeCILL. To see the license text in the directory
-more detail.
-
 eCImg - CImg Elixir TTL - is licensed under the Apache License Version 2.0.
+
+##### license of 3rd party libraries in "src/3rd_party"
+The CImg Library is licensed under the CeCILL-C/CeCILL.
+
+The stb - single-file public domain libraries for C/C++ - is public domain or MIT licensed.
