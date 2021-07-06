@@ -5,7 +5,7 @@ defmodule CImgTest do
   test "create" do
     img = CImg.create("test/IMG_9458.jpg")
     assert %CImg{} = img
-    assert [2448, 3264] = CImg.get_wh(img)
+    assert {2448, 3264, _, _} = CImg.shape(img)
     assert :ok = CImg.save(img, "test/IMG_XXXX.jpg")
   end
 
@@ -32,7 +32,7 @@ defmodule CImgTest do
     main_disp = CImgDisplay.create(image, "Click a point")
     draw_disp = CImgDisplay.create(visu, "Intensity profile")
 
-    [width, _] = CImg.get_wh(image)
+    {width,_,_,_} = CImg.shape(image)
     
 
     CImgDisplay.wait(main_disp)

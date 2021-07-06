@@ -23,10 +23,6 @@ defmodule CImg do
   @doc "save image object to the file"
   defdelegate save(cimg, fname),
     to: CImgNIF, as: :cimg_save
-  defdelegate get_wh(cimg),
-    to: CImgNIF, as: :cimg_get_wh
-  defdelegate get_whs(cimg),
-    to: CImgNIF, as: :cimg_get_whc
 
   @doc "resize the image object"
   def resize(cimg, [x, y]), do: CImgNIF.cimg_resize(cimg, x, y)
@@ -57,7 +53,7 @@ defmodule CImg do
   """
   def to_flatbin(%CImg{} = cimg) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatbin(cimg),
-         shape <- CImgNIF.cimg_get_whc(cimg) do
+         shape <- CImgNIF.cimg_shape(cimg) do
       %{
         descr: "<u1",
         shape: shape,
@@ -71,7 +67,7 @@ defmodule CImg do
   """
   def to_flatnorm(%CImg{} = cimg) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg),
-         shape <- CImgNIF.cimg_get_whc(cimg) do
+         shape <- CImgNIF.cimg_shape(cimg) do
       %{
         descr: "<f4",
         shape: shape,
@@ -147,14 +143,14 @@ defmodule CImgNIF do
   # stub implementations for NIFs (fallback)
   def cimg_create(_x, _y, _z, _c, _v),
     do: raise("NIF cimg_create/5 not implemented")
+  def cimg_create(_cimgu8),
+    do: raise("NIF cimg_create/1 not implemented")
+  def cimg_clear(_cimgu8),
+    do: raise("NIF cimg_clear/1 not implemented")
   def cimg_load(_s),
     do: raise("NIF cimg_load/1 not implemented")
   def cimg_save(_c, _s),
     do: raise("NIF cimg_save/2 not implemented")
-  def cimg_get_wh(_c),
-    do: raise("NIF cimg_get_wh/1 not implemented")
-  def cimg_get_whc(_c),
-    do: raise("NIF cimg_get_whc/1 not implemented")
   def cimg_resize(_c, _x, _y),
     do: raise("NIF cimg_resize/3 not implemented")
   def cimg_mirror(_c, _axis),
@@ -183,9 +179,9 @@ defmodule CImgNIF do
     do: raise("NIF cimg_get/5 not implemented")
   def cimg_assign(_cimgu8, _cimgu8_src),
     do: raise("NIF cimg_assign/2 not implemented")
-  def cimg_draw_circle(_cimg8, _x0, _y0, _radius, _color, _opacity),
+  def cimg_draw_circle(_cimgu8, _x0, _y0, _radius, _color, _opacity),
     do: raise("NIF cimg_draw_circle/6 not implemented")
-  def cimg_draw_circle(_cimg8, _x0, _y0, _radius, _color, _opacity, _pattern),
+  def cimg_draw_circle(_cimgu8, _x0, _y0, _radius, _color, _opacity, _pattern),
     do: raise("NIF cimg_draw_circle/7 not implemented")
   def cimg_shape(_cimgu8),
     do: raise("NIF cimg_shape/1 not implemented")

@@ -3,9 +3,9 @@
 * cimg_nif.cc
 *
 * Elixir/Erlang extension module: CImg
-* @author	   Shozo Fukuda
-* @date	load Sun Dec 06 10:10:35 JST 2020
-* System	   MINGW64/Windows 10<br>
+* @author Shozo Fukuda
+* @date	  Sun Dec 06 10:10:35 JST 2020
+* System  MINGW64/Windows 10<br>
 *
 **/
 /**************************************************************************{{{*/
@@ -14,9 +14,9 @@
 #include "CImgEx.h"
 using namespace cimg_library;
 
+/***** NIFs HELPER *****/
 #include "my_erl_nif.h"
 
-/***** NIFs HELPER *****/
 int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char* value)
 {
     unsigned int temp;
@@ -89,6 +89,7 @@ int enif_get_pos(ErlNifEnv* env, ERL_NIF_TERM list, int val[3])
     }
     return true;
 }
+
 
 /***** Elixir.CImgDisplay.functions *****/
 #if cimg_display != 0
@@ -205,6 +206,7 @@ struct NifCImgDisplay {
 };
 #endif
 
+
 /***** Elixir.CImgDisplay.functions *****/
 template <class T>
 struct NifCImg {
@@ -234,6 +236,7 @@ struct NifCImg {
                 enif_make_int(env, img->spectrum()))));
     }
 
+
     static ERL_NIF_TERM create(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         unsigned int size_x, size_y, size_z, size_c;
@@ -259,7 +262,27 @@ struct NifCImg {
         return enif_make_image(env, img);
     }
 
-    static ERL_NIF_TERM load(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+    static ERL_NIF_TERM create_copy(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+    {
+        CImgT* src;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &src)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT(*src);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, img);
+    }
+
+    static ERL_NIF_TERM create_load(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         ErlNifBinary bin;
 
@@ -279,6 +302,20 @@ struct NifCImg {
 
         return enif_make_image(env, img);
     }
+    
+    static ERL_NIF_TERM clear(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+    {
+        CImgT* img;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        img->clear();
+        
+        return argv[0];
+    }
 
     static ERL_NIF_TERM save(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
@@ -296,37 +333,6 @@ struct NifCImg {
         img->save(fname.c_str());
 
         return enif_make_ok(env);
-    }
-
-    static ERL_NIF_TERM cimg_get_wh(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-    {
-        CImgT* img;
-
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
-            return enif_make_badarg(env);
-        }
-
-        int width  = img->width();
-        int height = img->height();
-
-        return enif_make_list2(env, enif_make_int(env, width), enif_make_int(env, height));
-    }
-
-    static ERL_NIF_TERM cimg_get_whc(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
-    {
-        CImgT* img;
-
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
-            return enif_make_badarg(env);
-        }
-
-        int width    = img->width();
-        int height   = img->height();
-        int spectrum = img->spectrum();
-
-        return enif_make_list3(env, enif_make_int(env, width), enif_make_int(env, height), enif_make_int(env, spectrum));
     }
 
     static ERL_NIF_TERM shape(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
@@ -379,7 +385,7 @@ struct NifCImg {
         return argv[0];
     }
 
-    static ERL_NIF_TERM cimg_get_gray(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+    static ERL_NIF_TERM get_gray(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
     {
         CImgT* img;
         int opt_pn;
@@ -797,13 +803,13 @@ int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
 static ErlNifFunc nif_funcs[] = {
     // {erl_function_name, erl_function_arity, c_function, dirty_flags}
     {"cimg_create",           5, NifCImgU8::create,                  0},
-    {"cimg_load",             1, NifCImgU8::load,                    0},
+    {"cimg_create",           1, NifCImgU8::create_copy,             0},
+    {"cimg_load",             1, NifCImgU8::create_load,             0},
+    {"cimg_clear",            1, NifCImgU8::clear,                   0},
     {"cimg_save",             2, NifCImgU8::save,                    0},
-    {"cimg_get_wh",           1, NifCImgU8::cimg_get_wh,             0},
-    {"cimg_get_whc",          1, NifCImgU8::cimg_get_whc,            0},
     {"cimg_resize",           3, NifCImgU8::resize,                  0},
     {"cimg_mirror",           2, NifCImgU8::mirror,                  0},
-    {"cimg_get_gray",         2, NifCImgU8::cimg_get_gray,           0},
+    {"cimg_get_gray",         2, NifCImgU8::get_gray,                0},
     {"cimg_blur",             4, NifCImgU8::blur,                    0},
     {"cimg_get_crop",        10, NifCImgU8::get_crop,                0},
     {"cimg_fill",             2, NifCImgU8::fill,                    0},
