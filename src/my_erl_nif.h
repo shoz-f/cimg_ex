@@ -2,6 +2,8 @@
 #include <string>
 
 /***** NIFs HELPER *****/
+#define DECL_NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+
 ERL_NIF_TERM enif_make_atom_ex(ErlNifEnv* env, const char* name)
 {
     ERL_NIF_TERM res;

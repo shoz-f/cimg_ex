@@ -15,7 +15,7 @@ defmodule CImg do
       do: %CImg{handle: h, shape: shape}
   end
   
-  def create(x, y, z, c, val) do
+  def create(x, y, z, c, val) when is_integer(val) do
     with {:ok, h, [shape]} <- CImgNIF.cimg_create(x, y, z, c, val),
       do: %CImg{handle: h, shape: shape}
   end
@@ -48,38 +48,22 @@ defmodule CImg do
       do: %CImg{handle: crop, shape: shape}
   end
 
-  @doc """
-  get the flat binary from the image object
-  """
-  def to_flatbin(%CImg{} = cimg) do
+  @doc "get the flat binary from the image object"
+  def to_flatbin(cimg) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatbin(cimg),
-         shape <- CImgNIF.cimg_shape(cimg) do
-      %{
-        descr: "<u1",
-        shape: shape,
-        data: bin
-      }
-    end
+      do: %{descr: "<u1", fortran_order: false, shape: shape(cimg), data: bin}
   end
 
-  @doc """
-  get the normalized flat binary from the image object
-  """
-  def to_flatnorm(%CImg{} = cimg) do
+  @doc "get the normalized flat binary from the image object"
+  def to_flatnorm(cimg) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg),
-         shape <- CImgNIF.cimg_shape(cimg) do
-      %{
-        descr: "<f4",
-        shape: shape,
-        data: bin
-      }
-    end
+      do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
   end
 
   @doc """
   draw the colored box on the image object
   """
-  def draw_box(cimg, x0, y0, x1, y1, {_r, _g, _b} = rgb) do
+  def draw_box(cimg, x0, y0, x1, y1, rgb) do
     CImgNIF.cimg_draw_box(cimg, x0, y0, x1, y1, rgb)
   end
   
@@ -101,10 +85,27 @@ defmodule CImg do
     to: CImgNIF, as: :cimg_draw_circle
   defdelegate shape(cimg),
     to: CImgNIF, as: :cimg_shape
-  defdelegate transfer(cimg, cimg_src, address),
+  defdelegate transfer(cimg, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0),
     to: CImgNIF, as: :cimg_transfer
 end
 
+defmodule CImgMap do
+  alias __MODULE__
+
+  # image object
+  defstruct handle: nil, shape: {}
+
+  @doc "load the image file and create new image object."
+  def create(x, y, z, c, list) when is_list(list) do
+    with {:ok, h, [shape]} <- CImgNIF.cimgmap_create(x, y, z, c, list),
+      do: %CImgMap{handle: h, shape: shape}
+  end
+
+  defdelegate set(val, cimgmap, x, y \\ 0, z \\ 0, c \\ 0),
+    to: CImgNIF, as: :cimgmap_set
+  defdelegate get(cimgmap, x, y \\ 0, z \\ 0, c \\ 0),
+    to: CImgNIF, as: :cimgmap_get
+end
 
 defmodule CImgDisplay do
   alias __MODULE__
@@ -185,9 +186,17 @@ defmodule CImgNIF do
     do: raise("NIF cimg_draw_circle/7 not implemented")
   def cimg_shape(_cimgu8),
     do: raise("NIF cimg_shape/1 not implemented")
-  def cimg_transfer(_cimgu8, _cimgu8_src, _address),
-    do: raise("NIF cimg_transfer/3 not implemented")
-  
+  def cimg_transfer(_cimgu8, _cimgu8_src, _mapping, _cx, _cy, _cz),
+    do: raise("NIF cimg_transfer/6 not implemented")
+
+
+  def cimgmap_create(_x, _y, _z, _c, _list),
+    do: raise("NIF cimgmap_create/5 not implemented")
+  def cimgmap_set(_val, _cimgu8, _x, _y, _z, _c),
+    do: raise("NIF cimgmap_set/6 not implemented")
+  def cimgmap_get(_cimgu8, _x, _y, _z, _c),
+    do: raise("NIF cimgmap_get/5 not implemented")
+
   def cimgdisplay_u8(_cimgu8, _title, _normalization, _is_fullscreen, _is_close),
     do: raise("NIF cimgdisplay_u8/5 not implemented")
   def cimgdisplay_wait(_disp),
