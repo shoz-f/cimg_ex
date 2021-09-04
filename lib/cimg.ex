@@ -59,6 +59,12 @@ defmodule CImg do
     with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg),
       do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
   end
+  
+  @doc "create new image object from float binaries."
+  def create_from_f4bin(x, y, z, c, f4) when is_binary(f4) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_from_f4bin(x, y, z, c, f4),
+      do: %CImg{handle: h, shape: shape}
+  end
 
   @doc """
   draw the colored box on the image object
@@ -188,6 +194,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_shape/1 not implemented")
   def cimg_transfer(_cimgu8, _cimgu8_src, _mapping, _cx, _cy, _cz),
     do: raise("NIF cimg_transfer/6 not implemented")
+  def cimg_from_f4bin(_x, _y, _z, _c, _f4),
+    do: raise("NIF cimg_create/5 not implemented")
 
 
   def cimgmap_create(_x, _y, _z, _c, _list),

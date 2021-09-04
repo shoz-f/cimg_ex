@@ -164,6 +164,37 @@ struct NifCImg {
 
         return enif_make_image(env, img);
     }
+    
+    static DECL_NIF(create_from_f4bin) {
+        unsigned int size_x, size_y, size_z, size_c;
+        ErlNifBinary f4bin;
+
+        if (argc != 5
+        ||  !enif_get_uint(env, argv[0], &size_x)
+        ||  !enif_get_uint(env, argv[1], &size_y)
+        ||  !enif_get_uint(env, argv[2], &size_z)
+        ||  !enif_get_uint(env, argv[3], &size_c)
+        ||  !enif_inspect_binary(env, argv[4], &f4bin)
+        ||  f4bin.size != size_x*size_y*size_z*size_c*sizeof(float)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT(size_x, size_y, size_z, size_c);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        float *bin = reinterpret_cast<float*>(f4bin.data);
+        cimg_forXY(*img, x, y) {
+        cimg_forC(*img, c) {
+            (*img)(x, y, c) = static_cast<T>(256*(*bin++)+0.5);
+        }}
+
+        return enif_make_image(env, img);
+    }
 
     static DECL_NIF(create_list) {
         unsigned int size_x, size_y, size_z, size_c;
@@ -810,6 +841,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_get_flatnorm",     1, NifCImgU8::cimg_get_flat_f4,        0},
     {"cimg_draw_box",         6, NifCImgU8::cimg_draw_box,           0},
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},
+    {"cimg_from_f4bin",       5, NifCImgU8::create_from_f4bin,       0},
 
     {"cimgmap_create",        5, NifCImgMap::create_list,            0},
     {"cimgmap_set",           6, NifCImgMap::set,                    0},
