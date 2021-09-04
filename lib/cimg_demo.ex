@@ -3,9 +3,8 @@ defmodule CImgDemo do
     image  = CImg.create("test/lena.jpg")
     screen = CImg.create(512, 512, 1, 3, 0)
     disp   = CImgDisplay.create(image, "Click a point")
-    lens   = fishlens(90)
 
-    demo2_loop(0.0, disp, screen, image, lens)
+    demo2_loop(0.0, disp, screen, image, fishlens(90))
   end
 
   def demo2_loop(alpha, disp, res, img, lens) do
@@ -49,17 +48,5 @@ defmodule CImgDemo do
     for y <- -r..r, x <- -r..r, (rr = :math.sqrt(x*x + y*y)/r) < 1.0 do
       {[x,y],[trunc(rr*x),trunc(rr*y)]}
     end
-  end
-
-  def fishlens2(r) do
-    CImgMap.create(2*r+1, 2*r+1, 1, 2,
-      for y <- -r..r, x <- -r..r do
-        if (rr = :math.sqrt(x*x + y*y)/r) < 1.0 do
-          [trunc(rr*x)-x,trunc(rr*y)-y]
-        else
-          [0,0]
-        end
-      end |> List.flatten()
-    )
   end
 end
