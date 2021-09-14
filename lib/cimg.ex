@@ -27,6 +27,8 @@ defmodule CImg do
   @doc "resize the image object"
   def resize(cimg, [x, y]), do: CImgNIF.cimg_resize(cimg, x, y)
 
+  def get_resize(cimg, [x, y]), do: CImgNIF.cimg_get_resize(cimg, x, y)
+
   defdelegate blur(cimg, sigma, boundary_conditions \\ true, is_gaussian \\ true),
     to: CImgNIF, as: :cimg_blur
 
@@ -159,6 +161,8 @@ defmodule CImgNIF do
   def cimg_save(_c, _s),
     do: raise("NIF cimg_save/2 not implemented")
   def cimg_resize(_c, _x, _y),
+    do: raise("NIF cimg_resize/3 not implemented")
+  def cimg_get_resize(_c, _x, _y),
     do: raise("NIF cimg_resize/3 not implemented")
   def cimg_mirror(_c, _axis),
     do: raise("NIF cimg_mirror/2 not implemented")

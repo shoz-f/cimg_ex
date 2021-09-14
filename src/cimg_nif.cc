@@ -336,6 +336,28 @@ struct NifCImg {
         return argv[0];
     }
 
+    static DECL_NIF(get_resize) {
+        CImgT* img;
+        int width, height;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &width)
+        ||  !enif_get_int(env, argv[2], &height)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* resize;
+        try {
+            resize = new CImgT(img->get_resize(width, height));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, resize);
+    }
+
     static DECL_NIF(mirror) {
         CImgT* img;
         char axis[2];
@@ -824,6 +846,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_clear",            1, NifCImgU8::clear,                   0},
     {"cimg_save",             2, NifCImgU8::save,                    0},
     {"cimg_resize",           3, NifCImgU8::resize,                  0},
+    {"cimg_get_resize",       3, NifCImgU8::get_resize,              0},
     {"cimg_mirror",           2, NifCImgU8::mirror,                  0},
     {"cimg_get_gray",         2, NifCImgU8::get_gray,                0},
     {"cimg_blur",             4, NifCImgU8::blur,                    0},
