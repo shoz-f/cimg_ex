@@ -27,7 +27,10 @@ defmodule CImg do
   @doc "resize the image object"
   def resize(cimg, [x, y]), do: CImgNIF.cimg_resize(cimg, x, y)
 
-  def get_resize(cimg, [x, y]), do: CImgNIF.cimg_get_resize(cimg, x, y)
+  def get_resize(cimg, [x, y]) do
+    with {:ok, resize, [shape]} <- CImgNIF.cimg_get_resize(cimg, x, y),
+      do: %CImg{handle: resize, shape: shape}
+  end
 
   defdelegate blur(cimg, sigma, boundary_conditions \\ true, is_gaussian \\ true),
     to: CImgNIF, as: :cimg_blur
