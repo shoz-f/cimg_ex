@@ -54,14 +54,14 @@ defmodule CImg do
   end
 
   @doc "get the flat binary from the image object"
-  def to_flatbin(cimg) do
-    with {:ok, bin} <- CImgNIF.cimg_get_flatbin(cimg),
+  def to_flatbin(cimg, nchw \\ false) do
+    with {:ok, bin} <- CImgNIF.cimg_get_flatbin(cimg, nchw),
       do: %{descr: "<u1", fortran_order: false, shape: shape(cimg), data: bin}
   end
 
   @doc "get the normalized flat binary from the image object"
-  def to_flatnorm(cimg) do
-    with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg),
+  def to_flatnorm(cimg, nchw \\ false) do
+    with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg, nchw),
       do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
   end
   
@@ -179,10 +179,10 @@ defmodule CImgNIF do
     do: raise("NIF cimg_fill/2 not implemented")
   def cimg_draw_graph(_c, _d, _color, _o, _p, _v, _ymin, _ymax, _pat),
     do: raise("NIF cimg_draw_graph/9 not implemented")
-  def cimg_get_flatbin(_c),
-    do: raise("NIF cimg_get_flatbin/1 not implemented")
-  def cimg_get_flatnorm(_c),
-    do: raise("NIF cimg_get_flatnorm/1 not implemented")
+  def cimg_get_flatbin(_c, _nchw),
+    do: raise("NIF cimg_get_flatbin/2 not implemented")
+  def cimg_get_flatnorm(_c, _nchw),
+    do: raise("NIF cimg_get_flatnorm/2 not implemented")
   def cimg_draw_box(_c, _x0, _y0, _x1, _y1, _rgb),
     do: raise("NIF cimg_draw_box/6 not implemented")
   def cimg_display(_cimgu8, _disp),

@@ -557,9 +557,11 @@ struct NifCImg {
 
     static DECL_NIF(cimg_get_flat_u1) {
         CImgT* img;
+        bool   nchw = false;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_bool(env, argv[1], &nchw)) {
             return enif_make_badarg(env);
         }
 
@@ -569,19 +571,29 @@ struct NifCImg {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
         }
 
-        cimg_forXY(*img, x, y) {
-        cimg_forC(*img, c) {
-            *buff++ = (*img)(x, y, c);
-        }}
+        if (nchw) {
+            cimg_forC(*img, c) {
+            cimg_forXY(*img, x, y) {
+                *buff++ = (*img)(x, y, c);
+            }}
+        }
+        else {
+            cimg_forXY(*img, x, y) {
+            cimg_forC(*img, c) {
+                *buff++ = (*img)(x, y, c);
+            }}
+        }
 
         return enif_make_tuple2(env, enif_make_ok(env), binary);
     }
 
     static DECL_NIF(cimg_get_flat_f4) {
         CImgT* img;
+        bool   nchw = false;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_bool(env, argv[1], &nchw)) {
             return enif_make_badarg(env);
         }
 
@@ -591,10 +603,20 @@ struct NifCImg {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
         }
 
-        cimg_forXY(*img, x, y) {
-        cimg_forC(*img, c) {
-            *buff++ = (*img)(x, y, c)/255.0;   // normalize into 0.0-1.0
-        }}
+        if (nchw) {
+            // NCHW
+            cimg_forC(*img, c) {
+            cimg_forXY(*img, x, y) {
+                *buff++ = (*img)(x, y, c)/255.0;   // normalize into 0.0-1.0
+            }}
+        }
+        else {
+            // NHWC
+            cimg_forXY(*img, x, y) {
+            cimg_forC(*img, c) {
+                *buff++ = (*img)(x, y, c)/255.0;   // normalize into 0.0-1.0
+            }}
+        }
 
         return enif_make_tuple2(env, enif_make_ok(env), binary);
     }
@@ -860,8 +882,8 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_draw_circle",      6, NifCImgU8::draw_circle_filled,      0},
     {"cimg_draw_circle",      7, NifCImgU8::draw_circle,             0},
     {"cimg_shape",            1, NifCImgU8::shape,                   0},
-    {"cimg_get_flatbin",      1, NifCImgU8::cimg_get_flat_u1,        0},
-    {"cimg_get_flatnorm",     1, NifCImgU8::cimg_get_flat_f4,        0},
+    {"cimg_get_flatbin",      2, NifCImgU8::cimg_get_flat_u1,        0},
+    {"cimg_get_flatnorm",     2, NifCImgU8::cimg_get_flat_f4,        0},
     {"cimg_draw_box",         6, NifCImgU8::cimg_draw_box,           0},
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},
     {"cimg_from_f4bin",       5, NifCImgU8::create_from_f4bin,       0},
