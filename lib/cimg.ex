@@ -27,9 +27,16 @@ defmodule CImg do
   @doc "resize the image object"
   def resize(cimg, [x, y]), do: CImgNIF.cimg_resize(cimg, x, y)
 
+  @doc "get a image object resized [x, y]"
   def get_resize(cimg, [x, y]) do
     with {:ok, resize, [shape]} <- CImgNIF.cimg_get_resize(cimg, x, y),
       do: %CImg{handle: resize, shape: shape}
+  end
+  
+  @doc "get a image object packed into the box[x,y]"
+  def get_packed(cimg, [x, y], fill) do
+    with {:ok, packed, [shape]} <- CImgNIF.cimg_get_packed(cimg, x, y, fill),
+      do: %CImg{handle: packed, shape: shape}
   end
 
   defdelegate blur(cimg, sigma, boundary_conditions \\ true, is_gaussian \\ true),
@@ -59,9 +66,15 @@ defmodule CImg do
       do: %{descr: "<u1", fortran_order: false, shape: shape(cimg), data: bin}
   end
 
-  @doc "get the normalized flat binary from the image object"
+  @doc "get the float32 flat binary from the image object"
+  def to_flatf4(cimg, nchw \\ false) do
+    with {:ok, bin} <- CImgNIF.cimg_get_flatf4(cimg, nchw, false),
+      do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
+  end
+
+  @doc "get the normalized float32 flat binary from the image object"
   def to_flatnorm(cimg, nchw \\ false) do
-    with {:ok, bin} <- CImgNIF.cimg_get_flatnorm(cimg, nchw),
+    with {:ok, bin} <- CImgNIF.cimg_get_flatf4(cimg, nchw, true),
       do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
   end
   
@@ -100,6 +113,7 @@ defmodule CImg do
     to: CImgNIF, as: :cimg_transfer
 end
 
+
 defmodule CImgMap do
   alias __MODULE__
 
@@ -117,6 +131,7 @@ defmodule CImgMap do
   defdelegate get(cimgmap, x, y \\ 0, z \\ 0, c \\ 0),
     to: CImgNIF, as: :cimgmap_get
 end
+
 
 defmodule CImgDisplay do
   alias __MODULE__
@@ -167,6 +182,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_resize/3 not implemented")
   def cimg_get_resize(_c, _x, _y),
     do: raise("NIF cimg_resize/3 not implemented")
+  def cimg_get_packed(_c, _x, _y, _v),
+    do: raise("NIF cimg_packed/4 not implemented")
   def cimg_mirror(_c, _axis),
     do: raise("NIF cimg_mirror/2 not implemented")
   def cimg_get_gray(_c, _pn),
@@ -181,8 +198,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_draw_graph/9 not implemented")
   def cimg_get_flatbin(_c, _nchw),
     do: raise("NIF cimg_get_flatbin/2 not implemented")
-  def cimg_get_flatnorm(_c, _nchw),
-    do: raise("NIF cimg_get_flatnorm/2 not implemented")
+  def cimg_get_flatf4(_c, _nchw, _norm),
+    do: raise("NIF cimg_get_flatf4/3 not implemented")
   def cimg_draw_box(_c, _x0, _y0, _x1, _y1, _rgb),
     do: raise("NIF cimg_draw_box/6 not implemented")
   def cimg_display(_cimgu8, _disp),
