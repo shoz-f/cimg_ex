@@ -581,14 +581,22 @@ struct NifCImg {
         return argv[0];
     }
 
-    static DECL_NIF(cimg_get_flat_u1) {
+    static DECL_NIF(get_flat_u1) {
         CImgT* img;
-        bool   nchw = false;
+        bool   nchw;    // to transpose NCHW
+        bool   bgr;     // to convert RGB to BGR
 
-        if (argc != 2
+        if (argc != 3
         ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_bool(env, argv[1], &nchw)) {
+        ||  !enif_get_bool(env, argv[1], &nchw)
+        ||  !enif_get_bool(env, argv[2], &bgr)) {
             return enif_make_badarg(env);
+        }
+
+        // select BGR convertion
+        int color[4] = {0,1,2,3};
+        if (bgr && img->spectrum() >= 3) {
+            int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
         }
 
         ERL_NIF_TERM binary;
@@ -600,29 +608,43 @@ struct NifCImg {
         if (nchw) {
             cimg_forC(*img, c) {
             cimg_forXY(*img, x, y) {
-                *buff++ = (*img)(x, y, c);
+                *buff++ = (*img)(x, y,  color[c]);
             }}
         }
         else {
             cimg_forXY(*img, x, y) {
             cimg_forC(*img, c) {
-                *buff++ = (*img)(x, y, c);
+                *buff++ = (*img)(x, y,  color[c]);
             }}
         }
 
         return enif_make_tuple2(env, enif_make_ok(env), binary);
     }
 
-    static DECL_NIF(cimg_get_flat_f4) {
+    static DECL_NIF(get_flat_f4) {
         CImgT* img;
         bool   nchw;    // to transpose NCHW
+        bool   bgr;     // to convert RGB to BGR
         bool   norm;    // to normalize
 
-        if (argc != 3
+        if (argc != 4
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_bool(env, argv[1], &nchw)
-        ||  !enif_get_bool(env, argv[2], &norm)) {
+        ||  !enif_get_bool(env, argv[2], &bgr)
+        ||  !enif_get_bool(env, argv[3], &norm)) {
             return enif_make_badarg(env);
+        }
+
+        // select normalization
+        double factor = 1.0;
+        if (norm) {
+            factor = 1.0/255.0;     // normalize into 0.0-1.0
+        }
+
+        // select BGR convertion
+        int color[4] = {0,1,2,3};
+        if (bgr && img->spectrum() >= 3) {
+            int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
         }
 
         ERL_NIF_TERM binary;
@@ -631,32 +653,18 @@ struct NifCImg {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
         }
 
-        if (!nchw && !norm) {
-            // NHWC
-            cimg_forXY(*img, x, y) {
-            cimg_forC(*img, c) {
-                *buff++ = ((*img)(x, y, c));
-            }}
-        }
-        else if (!nchw && norm) {
-            // normalized NHWC
-            cimg_forXY(*img, x, y) {
-            cimg_forC(*img, c) {
-                *buff++ = ((*img)(x, y, c))/255.0;   // normalize into 0.0-1.0
-            }}
-        }
-        else if (nchw && !norm) {
+        if (nchw) {
             // NCHW
             cimg_forC(*img, c) {
             cimg_forXY(*img, x, y) {
-                *buff++ = ((*img)(x, y, c));
+                *buff++ = ((*img)(x, y, color[c])) * factor;
             }}
         }
         else {
-            // normalized NCHW
-            cimg_forC(*img, c) {
+            // NHWC
             cimg_forXY(*img, x, y) {
-                *buff++ = ((*img)(x, y, c))/255.0;   // normalize into 0.0-1.0
+            cimg_forC(*img, c) {
+                *buff++ = ((*img)(x, y, color[c])) * factor;
             }}
         }
 
@@ -926,8 +934,8 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_draw_circle",      7, NifCImgU8::draw_circle,             0},
     {"cimg_shape",            1, NifCImgU8::shape,                   0},
     {"cimg_size",             1, NifCImgU8::size,                    0},
-    {"cimg_get_flatbin",      2, NifCImgU8::cimg_get_flat_u1,        0},
-    {"cimg_get_flatf4",       3, NifCImgU8::cimg_get_flat_f4,        0},
+    {"cimg_get_flatbin",      3, NifCImgU8::get_flat_u1,             0},
+    {"cimg_get_flatf4",       4, NifCImgU8::get_flat_f4,             0},
     {"cimg_draw_box",         6, NifCImgU8::cimg_draw_box,           0},
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},
     {"cimg_from_f4bin",       5, NifCImgU8::create_from_f4bin,       0},
