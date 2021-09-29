@@ -728,7 +728,7 @@ struct NifCImg {
     static DECL_NIF(size) {
         CImgT* img;
 
-        if (argc != 6
+        if (argc != 1
         ||  !enif_get_image(env, argv[0], &img)) {
             return enif_make_badarg(env);
         }
@@ -925,6 +925,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_draw_circle",      6, NifCImgU8::draw_circle_filled,      0},
     {"cimg_draw_circle",      7, NifCImgU8::draw_circle,             0},
     {"cimg_shape",            1, NifCImgU8::shape,                   0},
+    {"cimg_size",             1, NifCImgU8::size,                    0},
     {"cimg_get_flatbin",      2, NifCImgU8::cimg_get_flat_u1,        0},
     {"cimg_get_flatf4",       3, NifCImgU8::cimg_get_flat_f4,        0},
     {"cimg_draw_box",         6, NifCImgU8::cimg_draw_box,           0},

@@ -63,19 +63,19 @@ defmodule CImg do
   @doc "get the flat binary from the image object"
   def to_flatbin(cimg, nchw \\ false) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatbin(cimg, nchw),
-      do: %{descr: "<u1", fortran_order: false, shape: shape(cimg), data: bin}
+      do: %{descr: "<u1", fortran_order: false, shape: {size(cimg)}, data: bin}
   end
 
   @doc "get the float32 flat binary from the image object"
   def to_flatf4(cimg, nchw \\ false) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatf4(cimg, nchw, false),
-      do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
+      do: %{descr: "<f4", fortran_order: false, shape: {size(cimg)}, data: bin}
   end
 
   @doc "get the normalized float32 flat binary from the image object"
   def to_flatnorm(cimg, nchw \\ false) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatf4(cimg, nchw, true),
-      do: %{descr: "<f4", fortran_order: false, shape: shape(cimg), data: bin}
+      do: %{descr: "<f4", fortran_order: false, shape: {size(cimg)}, data: bin}
   end
   
   @doc "create new image object from float binaries."
@@ -109,6 +109,8 @@ defmodule CImg do
     to: CImgNIF, as: :cimg_draw_circle
   defdelegate shape(cimg),
     to: CImgNIF, as: :cimg_shape
+  defdelegate size(cimg),
+    to: CImgNIF, as: :cimg_size
   defdelegate transfer(cimg, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0),
     to: CImgNIF, as: :cimg_transfer
 end
@@ -216,6 +218,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_draw_circle/7 not implemented")
   def cimg_shape(_cimgu8),
     do: raise("NIF cimg_shape/1 not implemented")
+  def cimg_size(_cimgu8),
+    do: raise("NIF cimg_size/1 not implemented")
   def cimg_transfer(_cimgu8, _cimgu8_src, _mapping, _cx, _cy, _cz),
     do: raise("NIF cimg_transfer/6 not implemented")
   def cimg_from_f4bin(_x, _y, _z, _c, _f4),
