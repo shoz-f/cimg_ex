@@ -78,6 +78,12 @@ defmodule CImg do
       do: %{descr: "<f4", fortran_order: false, shape: {size(cimg)}, data: bin}
   end
   
+  @doc "create new image object from byte binaries."
+  def create_from_u8bin(x, y, z, c, u8) when is_binary(u8) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_from_u8bin(x, y, z, c, u8),
+      do: %CImg{handle: h, shape: shape}
+  end
+
   @doc "create new image object from float binaries."
   def create_from_f4bin(x, y, z, c, f4) when is_binary(f4) do
     with {:ok, h, [shape]} <- CImgNIF.cimg_from_f4bin(x, y, z, c, f4),
@@ -222,8 +228,10 @@ defmodule CImgNIF do
     do: raise("NIF cimg_size/1 not implemented")
   def cimg_transfer(_cimgu8, _cimgu8_src, _mapping, _cx, _cy, _cz),
     do: raise("NIF cimg_transfer/6 not implemented")
+  def cimg_from_u8bin(_x, _y, _z, _c, _f4),
+    do: raise("NIF cimg_from_u8bin/5 not implemented")
   def cimg_from_f4bin(_x, _y, _z, _c, _f4),
-    do: raise("NIF cimg_create/5 not implemented")
+    do: raise("NIF cimg_from_f4bin/5 not implemented")
 
 
   def cimgmap_create(_x, _y, _z, _c, _list),
