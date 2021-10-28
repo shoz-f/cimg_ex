@@ -740,14 +740,14 @@ struct NifCImg {
         return argv[0];
     }
 
-    static DECL_NIF(cimg_draw_rectangle) {
+    static DECL_NIF(draw_rectangle) {
         CImgT* img;
         int  x0, y0, x1, y1;
         unsigned char color[3];
         double opacity;
         unsigned int pattern;
 
-        if (argc != 6
+        if (argc != 8
         ||  !enif_get_image(env, argv[0], &img)
         ||  !enif_get_int(env, argv[1], &x0)
         ||  !enif_get_int(env, argv[2], &y0)
@@ -944,7 +944,7 @@ int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
 static ErlNifFunc nif_funcs[] = {
 //  {erl_function_name, erl_function_arity, c_function, dirty_flags}
     {"cimg_create",           5, NifCImgU8::create_scalar,           0},
-    {"cimg_create",           1, NifCImgU8::create_copy,             0},
+    {"cimg_dup",              1, NifCImgU8::create_copy,             0},
     {"cimg_load",             1, NifCImgU8::create_load,             0},
     {"cimg_clear",            1, NifCImgU8::clear,                   0},
     {"cimg_save",             2, NifCImgU8::save,                    0},
@@ -968,6 +968,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_get_flatbin",      3, NifCImgU8::get_flat_u1,             0},
     {"cimg_get_flatf4",       4, NifCImgU8::get_flat_f4,             0},
     {"cimg_draw_box",         6, NifCImgU8::cimg_draw_box,           0},
+    {"cimg_draw_rect",        8, NifCImgU8::draw_rectangle,          0},
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},
     {"cimg_from_u8bin",       5, NifCImgU8::create_from_u8bin,       0},
     {"cimg_from_f4bin",       5, NifCImgU8::create_from_f4bin,       0},

@@ -20,6 +20,11 @@ defmodule CImg do
       do: %CImg{handle: h, shape: shape}
   end
 
+  def dup(cimg) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_dup(cimg),
+      do: %CImg{handle: h, shape: shape}
+  end
+
   @doc "save image object to the file"
   defdelegate save(cimg, fname),
     to: CImgNIF, as: :cimg_save
@@ -113,6 +118,8 @@ defmodule CImg do
     to: CImgNIF, as: :cimg_draw_circle
   defdelegate draw_circle(cimg, x0, y0, radius, color, opacity, pattern),
     to: CImgNIF, as: :cimg_draw_circle
+  defdelegate draw_rect(cimg, x0, y0, x1, y1, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF),
+    to: CImgNIF, as: :cimg_draw_rect
   defdelegate shape(cimg),
     to: CImgNIF, as: :cimg_shape
   defdelegate size(cimg),
@@ -178,7 +185,7 @@ defmodule CImgNIF do
   # stub implementations for NIFs (fallback)
   def cimg_create(_x, _y, _z, _c, _v),
     do: raise("NIF cimg_create/5 not implemented")
-  def cimg_create(_cimgu8),
+  def cimg_dup(_cimgu8),
     do: raise("NIF cimg_create/1 not implemented")
   def cimg_clear(_cimgu8),
     do: raise("NIF cimg_clear/1 not implemented")
@@ -222,6 +229,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_draw_circle/6 not implemented")
   def cimg_draw_circle(_cimgu8, _x0, _y0, _radius, _color, _opacity, _pattern),
     do: raise("NIF cimg_draw_circle/7 not implemented")
+  def cimg_draw_rect(_cimgu8, _x0, _y0, _x1, _y1, _color, _opacity, _pattern),
+    do: raise("NIF cimg_draw_rect/8 not implemented")
   def cimg_shape(_cimgu8),
     do: raise("NIF cimg_shape/1 not implemented")
   def cimg_size(_cimgu8),

@@ -24,7 +24,8 @@ defmodule Cimg.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_make, "~> 0.6.2", runtime: false}
+      {:elixir_make, "~> 0.6.2", runtime: false},
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false},
     ]
   end
 end
