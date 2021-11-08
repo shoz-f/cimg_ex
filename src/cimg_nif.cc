@@ -652,6 +652,7 @@ struct NifCImg {
         return enif_make_tuple2(env, enif_make_ok(env), binary);
     }
 
+
     static DECL_NIF(get_flat_f4) {
         CImgT* img;
         bool   nchw;    // to transpose NCHW
@@ -697,6 +698,73 @@ struct NifCImg {
             cimg_forC(*img, c) {
                 *buff++ = ((*img)(x, y, color[c])) * factor;
             }}
+        }
+
+        return enif_make_tuple2(env, enif_make_ok(env), binary);
+    }
+
+
+    static DECL_NIF(get_flat) {
+        CImgT*      img;
+        std::string dtype;
+        double     lo, hi;
+        bool        nchw;    // to transpose NCHW
+        bool        bgr;     // to convert RGB to BGR
+
+        if (argc != 6
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_str(env, argv[1], &dtype)
+        ||  !enif_get_double(env, argv[2], &lo)
+        ||  !enif_get_double(env, argv[3], &hi)
+        ||  !enif_get_bool(env, argv[4], &nchw)
+        ||  !enif_get_bool(env, argv[5], &bgr)) {
+            return enif_make_badarg(env);
+        }
+
+        // select BGR convertion
+        int color[4] = {0,1,2,3};
+        if (bgr && img->spectrum() >= 3) {
+            int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
+        }
+
+        ERL_NIF_TERM binary;
+        if (dtype == "<f4") {
+            float* buff = reinterpret_cast<float*>(enif_make_new_binary(env, 4*img->size(), &binary));
+            if (buff == NULL) {
+                return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+            }
+            
+            // normalization coefficient
+            double a = (hi - lo)/255.0;
+            double b = lo;
+
+            if (nchw) {
+                cimg_forC(*img, c) cimg_forXY(*img, x, y) {
+                    *buff++ = a*((*img)(x, y, color[c])) + b;
+                }
+            }
+            else {
+                cimg_forXY(*img, x, y) cimg_forC(*img, c) {
+                    *buff++ = a*((*img)(x, y, color[c])) + b;
+                }
+            }
+        }
+        else {
+            unsigned char* buff = enif_make_new_binary(env, img->size(), &binary);
+            if (buff == NULL) {
+                return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+            }
+
+            if (nchw) {
+                cimg_forC(*img, c) cimg_forXY(*img, x, y) {
+                    *buff++ = (*img)(x, y,  color[c]);
+                }
+            }
+            else {
+                cimg_forXY(*img, x, y) cimg_forC(*img, c) {
+                    *buff++ = (*img)(x, y,  color[c]);
+                }
+            }
         }
 
         return enif_make_tuple2(env, enif_make_ok(env), binary);
@@ -967,6 +1035,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_size",             1, NifCImgU8::size,                    0},
     {"cimg_get_flatbin",      3, NifCImgU8::get_flat_u1,             0},
     {"cimg_get_flatf4",       4, NifCImgU8::get_flat_f4,             0},
+    {"cimg_get_flat",         6, NifCImgU8::get_flat,                0},
     {"cimg_draw_box",         6, NifCImgU8::cimg_draw_box,           0},
     {"cimg_draw_rect",        8, NifCImgU8::draw_rectangle,          0},
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},

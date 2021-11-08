@@ -42,6 +42,17 @@ int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
     return enif_get_double(env, term, val);
 }
 
+int enif_get_str(ErlNifEnv* env, ERL_NIF_TERM term, std::string* str)
+{
+    ErlNifBinary bin;
+    if (!enif_inspect_binary(env, term, &bin)) {
+        return false;
+    }
+    str->assign((const char*)bin.data, bin.size);
+
+    return true;
+}
+
 /***** ERL RESOURCE HANDLING *****/
 template <class T>
 struct Resource {

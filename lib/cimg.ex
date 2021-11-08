@@ -15,11 +15,22 @@ defmodule CImg do
       do: %CImg{handle: h, shape: shape}
   end
   
+  def load(fname) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_load(fname),
+      do: %CImg{handle: h, shape: shape}
+  end
+
+  @doc """
+  create image filled val
+  """
   def create(x, y, z, c, val) when is_integer(val) do
     with {:ok, h, [shape]} <- CImgNIF.cimg_create(x, y, z, c, val),
       do: %CImg{handle: h, shape: shape}
   end
 
+  @doc """
+  duplicate image
+  """
   def dup(cimg) do
     with {:ok, h, [shape]} <- CImgNIF.cimg_dup(cimg),
       do: %CImg{handle: h, shape: shape}
@@ -30,16 +41,16 @@ defmodule CImg do
     to: CImgNIF, as: :cimg_save
 
   @doc "resize the image object"
-  def resize(cimg, [x, y]), do: CImgNIF.cimg_resize(cimg, x, y)
+  def resize(cimg, {x, y}), do: CImgNIF.cimg_resize(cimg, x, y)
 
   @doc "get a image object resized [x, y]"
-  def get_resize(cimg, [x, y]) do
+  def get_resize(cimg, {x, y}) do
     with {:ok, resize, [shape]} <- CImgNIF.cimg_get_resize(cimg, x, y),
       do: %CImg{handle: resize, shape: shape}
   end
   
   @doc "get a image object packed into the box[x,y]"
-  def get_packed(cimg, [x, y], fill) do
+  def get_packed(cimg, {x, y}, fill) do
     with {:ok, packed, [shape]} <- CImgNIF.cimg_get_packed(cimg, x, y, fill),
       do: %CImg{handle: packed, shape: shape}
   end
@@ -81,6 +92,18 @@ defmodule CImg do
   def to_flatnorm(cimg, nchw \\ false, bgr \\ false) do
     with {:ok, bin} <- CImgNIF.cimg_get_flatf4(cimg, nchw, bgr, true),
       do: %{descr: "<f4", fortran_order: false, shape: {size(cimg)}, data: bin}
+  end
+  
+  @doc "get the flat binary"
+  def to_flat(cimg, opts \\ []) do
+    dtype    = Keyword.get(opts, :dtype, "<f4")
+    {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
+    nchw     = :nchw in opts
+    bgr      = :bgr  in opts
+
+    with {:ok, bin} <- CImgNIF.cimg_get_flat(cimg, dtype, lo, hi, nchw, bgr) do
+      %{descr: dtype, fortran_order: false, shape: {size(cimg)}, data: bin}
+    end
   end
   
   @doc "create new image object from byte binaries."
@@ -215,6 +238,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_get_flatbin/3 not implemented")
   def cimg_get_flatf4(_c, _nchw, _bgr, _norm),
     do: raise("NIF cimg_get_flatf4/4 not implemented")
+  def cimg_get_flat(_c, _dtype, _lo, _hi, _nchw, _bgr),
+    do: raise("NIF cimg_get_flatf4/6 not implemented")
   def cimg_draw_box(_c, _x0, _y0, _x1, _y1, _rgb),
     do: raise("NIF cimg_draw_box/6 not implemented")
   def cimg_display(_cimgu8, _disp),
