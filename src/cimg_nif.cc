@@ -863,10 +863,11 @@ struct NifCImg {
         }
 
         CImgT lut;
-        if (lut_name == "default")    { lut = CImgT::default_LUT256(); }
-        else if (lut_name == "hot")  { lut = CImgT::hot_LUT256();     }
-        else if (lut_name == "cool") { lut = CImgT::cool_LUT256();    }
-        else if (lut_name == "jet")  { lut = CImgT::jet_LUT256();     }
+        if (lut_name == "default")     { lut = CImgT::default_LUT256(); }
+        else if (lut_name == "lines") { lut = CImgT::lines_LUT256();   }
+        else if (lut_name == "hot")   { lut = CImgT::hot_LUT256();     }
+        else if (lut_name == "cool")  { lut = CImgT::cool_LUT256();    }
+        else if (lut_name == "jet")   { lut = CImgT::jet_LUT256();     }
         else {
         	return enif_make_badarg(env);
         }
