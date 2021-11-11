@@ -23,6 +23,9 @@ LIB_STB  = src/3rd_party/stb
 CFLAGS  ?= -O2 -Wall -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -I$(LIB_STB) -pedantic -fPIC
 LDFLAGS += -fPIC -shared -lgdi32 #-ljpeg #-Wl,--out-implib,a.lib
 
+#(MinGW) g++ -o hello_world.exe hello_world.cpp -O2 -lgdi32
+#(LINUX) g++ -o hello_world.exe hello_world.cpp -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
+
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS  ?= -I"$(ERL_EI_INCLUDE_DIR)"
 ERL_LDFLAGS ?= -L"$(ERL_EI_LIBDIR)"
