@@ -595,6 +595,24 @@ struct NifCImg {
         return argv[0];
     }
 
+    static DECL_NIF(draw_image)
+    {
+        CImgT* img;
+        CImgT* mask;
+        double opacity;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_image(env, argv[1], &mask)
+        ||  !enif_get_number(env, argv[2], &opacity)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_image(*mask, opacity);
+
+    	return argv[0];
+    }
+
     static DECL_NIF(display) {
 #if cimg_display != 0
         CImgT* img;
@@ -832,6 +850,38 @@ struct NifCImg {
         return argv[0];
     }
 
+    static DECL_NIF(map) {
+        CImgT* img;
+        std::string lut_name;
+        unsigned int boundary_conditions;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_str(env, argv[1], &lut_name)
+        ||  !enif_get_uint(env, argv[2], &boundary_conditions)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT lut;
+        if (lut_name == "default")    { lut = CImgT::default_LUT256(); }
+        else if (lut_name == "hot")  { lut = CImgT::hot_LUT256();     }
+        else if (lut_name == "cool") { lut = CImgT::cool_LUT256();    }
+        else if (lut_name == "jet")  { lut = CImgT::jet_LUT256();     }
+        else {
+        	return enif_make_badarg(env);
+        }
+
+        CImgT* res;
+        try {
+            res = new CImgT(img->map(lut, boundary_conditions));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+        
+        return enif_make_image(env, res);
+    }
+
     static DECL_NIF(size) {
         CImgT* img;
 
@@ -1041,6 +1091,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},
     {"cimg_from_u8bin",       5, NifCImgU8::create_from_u8bin,       0},
     {"cimg_from_f4bin",       5, NifCImgU8::create_from_f4bin,       0},
+    {"cimg_map",              3, NifCImgU8::map,                     0},
 
     {"cimgmap_create",        5, NifCImgMap::create_list,            0},
     {"cimgmap_set",           6, NifCImgMap::set,                    0},

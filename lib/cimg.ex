@@ -1,6 +1,6 @@
 defmodule CImg do
   @moduledoc """
-  CImg image processing extention.
+  Light-weight image processing extention.
   """
   alias __MODULE__
 
@@ -115,6 +115,11 @@ defmodule CImg do
   @doc "create new image object from float binaries."
   def create_from_f4bin(x, y, z, c, f4) when is_binary(f4) do
     with {:ok, h, [shape]} <- CImgNIF.cimg_from_f4bin(x, y, z, c, f4),
+      do: %CImg{handle: h, shape: shape}
+  end
+
+  def map(cimg, lut, boundary \\ 0) do
+    with {:ok, h, [shape]} <- CImgNIF.cimg_map(cimg, lut, boundary),
       do: %CImg{handle: h, shape: shape}
   end
 
@@ -266,6 +271,8 @@ defmodule CImgNIF do
     do: raise("NIF cimg_from_u8bin/5 not implemented")
   def cimg_from_f4bin(_x, _y, _z, _c, _f4),
     do: raise("NIF cimg_from_f4bin/5 not implemented")
+  def cimg_map(_c, _lut, _boundary),
+    do: raise("NIF cimg_map/3 not implemented")
 
 
   def cimgmap_create(_x, _y, _z, _c, _list),
