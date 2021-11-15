@@ -3,18 +3,18 @@ defmodule CImgTest do
   doctest CImg
 
   test "create" do
-    img = CImg.create("test/IMG_9458.jpg")
+    img = CImg.load("test/IMG_9458.jpg")
     assert %CImg{} = img
     assert {2448, 3264, _, _} = CImg.shape(img)
     assert :ok = CImg.save(img, "test/IMG_XXXX.jpg")
   end
 
   test "resize(416, 416)" do
-    img = CImg.create("test/IMG_9458.jpg")
+    img = CImg.load("test/IMG_9458.jpg")
     assert %CImg{} = img
 
     img
-    |> CImg.resize([416, 416])
+    |> CImg.resize({416, 416})
     |> CImg.mirror(:y)
     |> CImg.get_gray()
     |> CImg.draw_box(0.2, 0.3, 0.4, 0.6, {255, 0, 0})
@@ -26,7 +26,7 @@ defmodule CImgTest do
     green = {0, 255, 0}
     blue  = {0, 0, 255}
 
-    image = CImg.create("test/lena.jpg") |> CImg.blur(2.5)
+    image = CImg.load("test/lena.jpg") |> CImg.blur(2.5)
     visu  = CImg.create(500, 400, 1, 3, 0)
     
     main_disp = CImgDisplay.create(image, "Click a point")

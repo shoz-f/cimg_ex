@@ -1,6 +1,6 @@
 defmodule CImgDemo do
   def demo2 do
-    image  = CImg.create("test/lena.jpg")
+    image  = CImg.load("test/lena.jpg")
     screen = CImg.create(512, 512, 1, 3, 0)
     disp   = CImgDisplay.create(image, "Click a point")
 

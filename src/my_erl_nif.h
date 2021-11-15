@@ -4,6 +4,15 @@
 /***** NIFs HELPER *****/
 #define DECL_NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
+/***  Module Header  ******************************************************}}}*/
+/**
+* make atom term
+* @par description
+*   make an atom term from name. if same atom is already existing, just return it.
+*
+* @return NIF term
+**/
+/**************************************************************************{{{*/
 ERL_NIF_TERM enif_make_atom_ex(ErlNifEnv* env, const char* name)
 {
     ERL_NIF_TERM res;
@@ -19,18 +28,37 @@ ERL_NIF_TERM enif_make_atom_ex(ErlNifEnv* env, const char* name)
 #define enif_make_ok(env)       enif_make_atom_ex(env, "ok")
 #define enif_make_error(env)    enif_make_atom_ex(env, "error")
 
+/***  Module Header  ******************************************************}}}*/
+/**
+* convert term to boolean
+* @par description
+*   convert the term to boolean. return false if the term is ":false" or ":nil".
+*
+* @return succeed or fail
+**/
+/**************************************************************************{{{*/
 int enif_get_bool(ErlNifEnv* env, ERL_NIF_TERM term, bool* cond)
 {
     char atom[256];
-    if (!enif_get_atom(env, term, atom, sizeof(atom), ERL_NIF_LATIN1)) {
+    int  len;
+    if ((len = enif_get_atom(env, term, atom, sizeof(atom), ERL_NIF_LATIN1)) == 0) {
         return false;
     }
     
-    *cond = std::strcmp(atom, "false") != 0 && std::strcmp(atom, "nil") != 0;
+    *cond = (std::strcmp(atom, "false") != 0 && std::strcmp(atom, "nil") != 0);
     
     return true;
 }
 
+/***  Module Header  ******************************************************}}}*/
+/**
+* convert int or double term to double
+* @par description
+*   convert the number term to double.
+*
+* @return succeed or fail
+**/
+/**************************************************************************{{{*/
 int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
 {
     int ival;
@@ -42,6 +70,15 @@ int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
     return enif_get_double(env, term, val);
 }
 
+/***  Module Header  ******************************************************}}}*/
+/**
+* convert binary term to string
+* @par description
+*   convert the binary term to std::string.
+*
+* @return succeed or fail
+**/
+/**************************************************************************{{{*/
 int enif_get_str(ErlNifEnv* env, ERL_NIF_TERM term, std::string* str)
 {
     ErlNifBinary bin;
@@ -53,7 +90,13 @@ int enif_get_str(ErlNifEnv* env, ERL_NIF_TERM term, std::string* str)
     return true;
 }
 
-/***** ERL RESOURCE HANDLING *****/
+/***  Class Header  *******************************************************}}}*/
+/**
+* Erl resouce handling
+* @par description
+*   wrapping Erl resouce with C++ struct.
+**/
+/**************************************************************************{{{*/
 template <class T>
 struct Resource {
     static ErlNifResourceType* _ResType;
