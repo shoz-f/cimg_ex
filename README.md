@@ -1,4 +1,4 @@
-# eCImg
+# Cimg
 Light-weight image processing module in Elixir with CImg.
 
 ## Platform
@@ -17,7 +17,7 @@ def deps do
 end
 ```
 ## License
-eCImg is licensed under the Apache License Version 2.0.
+Cimg is licensed under the Apache License Version 2.0.
 
 #### -- license overview of included 3rd party libraries --
 - The "CImg" Library is licensed under the CeCILL-C/CeCILL.
