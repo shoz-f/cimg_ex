@@ -6,24 +6,66 @@ defmodule CImg do
   alias CImg.NIF
 
   # image object
+  #   :handle - Erlang resource object pointing to the CImg image.
+  #   :shape  - demensions {x, y, z, spectrum} of image.
   defstruct handle: nil, shape: {}
 
   @doc """
-  create image filled val
+  Create image{x,y,z,c} filled `val`.
+
+  ## Parameters
+
+    * x,y,z,c - image's x-size, y-size, z-size and spectrum.
+    * val     - filling value.
+
+
+  ## Examples
+
+    ```Elixir
+    iex> img = CImg.create(200, 100, 1, 3, 127)
+    ```
   """
   def create(x, y, z, c, val) when is_integer(val) do
     with {:ok, h, [shape]} <- NIF.cimg_create(x, y, z, c, val),
       do: %CImg{handle: h, shape: shape}
   end
-  
-  @doc "create new image object from byte binaries."
+
+  @doc """
+  Create image{x,y,z,c} from byte binary. `create_from_bin` helps you to make
+  the image from the serialiezed output tensor of DNN model.
+
+  ## Parameters
+
+    * bin - binary data to have in an image.
+    * x,y,z,c - image's x-size, y-size, z-size and spectrum.
+    * dtype - data type in the binary. any data types are converted to int8 in the image.
+      - "<f4" - 32bit float (available value in range 0.0..1.0)
+      - "<u1" - 8bit unsigned integer
+
+  ## Examples
+
+    ```Elixir
+    iex> bin = TflInterp.get_output_tensor(__MODULE__, 0)
+    iex> img = CImg.create_from_bin(bin, 300, 300, 1, 3, "<f4")
+    ```
+  """
   def create_from_bin(bin, x, y, z, c, dtype) when is_binary(bin) do
     with {:ok, h, [shape]} <- NIF.cimg_from_bin(bin, x, y, z, c, dtype),
       do: %CImg{handle: h, shape: shape}
   end
 
   @doc """
-  load the image file and create new image object.
+  Load a image from file.
+
+  ## Parameters
+
+    * fname - file path of the image. (only jpeg images - xxx.jpg - are available now)
+
+  ## Examples
+
+    ```Elixir
+    iex> img = CImg.load("sample.jpg")
+    ```
   """
   def load(fname) do
     with {:ok, h, [shape]} <- NIF.cimg_load(fname),
@@ -31,14 +73,33 @@ defmodule CImg do
   end
 
   @doc """
-  duplicate image
+  Duplicate the image.
+
+  ## Parameters
+
+    * cimg - image object %CImg{} to duplicate.
+
+  ## Examples
+
+    ```
+    iex> img = CImg.dup(original)
+    # create new image object `img` have same shape and values of original.
+    ```
   """
   def dup(cimg) do
     with {:ok, h, [shape]} <- NIF.cimg_dup(cimg),
       do: %CImg{handle: h, shape: shape}
   end
 
-  @doc "save image object to the file"
+  @doc """
+  Save the image to the file.
+
+  ## Parameters
+
+    * cimg - image object %CImg{} to save.
+    * fname - file path for the image. (only jpeg images - xxx.jpg - are available now)
+
+  """
   defdelegate save(cimg, fname),
     to: NIF, as: :cimg_save
 
@@ -50,7 +111,7 @@ defmodule CImg do
     with {:ok, resize, [shape]} <- NIF.cimg_get_resize(cimg, x, y),
       do: %CImg{handle: resize, shape: shape}
   end
-  
+
   @doc "get a image object packed into the box[x,y]"
   def get_packed(cimg, {x, y}, fill) do
     with {:ok, packed, [shape]} <- NIF.cimg_get_packed(cimg, x, y, fill),
@@ -78,37 +139,32 @@ defmodule CImg do
       do: %CImg{handle: crop, shape: shape}
   end
 
-  @doc "get the flat binary from the image object"
-  def to_flatbin(cimg, nchw \\ false, bgr \\ false) do
-    case {nchw, bgr} do
-      {false, false} -> to_flat(cimg, [{:dtype, "<u1"}])
-      {false, true } -> to_flat(cimg, [{:dtype, "<u1"}, :bgr])
-      {true,  false} -> to_flat(cimg, [{:dtype, "<u1"}, :nchw])
-      {true,  true } -> to_flat(cimg, [{:dtype, "<u1"}, :nchw, :bgr])
-    end
-  end
+  @doc """
+  Get serialized binary of the image from top-left to bottom-right.
+  `to_flat/2` helps you to make 32bit-float arrary for the input tensors of DNN model.
 
-  @doc "get the float32 flat binary from the image object"
-  def to_flatf4(cimg, nchw \\ false, bgr \\ false) do
-    case {nchw, bgr} do
-      {false, false} -> to_flat(cimg, [{:range, {0.0, 255.0}}])
-      {false, true } -> to_flat(cimg, [{:range, {0.0, 255.0}}, :bgr])
-      {true,  false} -> to_flat(cimg, [{:range, {0.0, 255.0}}, :nchw])
-      {true,  true } -> to_flat(cimg, [{:range, {0.0, 255.0}}, :nchw, :bgr])
-    end
-  end
+  ## Parameters
 
-  @doc "get the normalized float32 flat binary from the image object"
-  def to_flatnorm(cimg, nchw \\ false, bgr \\ false) do
-    case {nchw, bgr} do
-      {false, false} -> to_flat(cimg, [])
-      {false, true } -> to_flat(cimg, [:bgr])
-      {true,  false} -> to_flat(cimg, [:nchw])
-      {true,  true } -> to_flat(cimg, [:nchw, :bgr])
-    end
-  end
-  
-  @doc "get the flat binary"
+    * cimg - image object.
+    * opts - conversion options
+      - { :dtype, xx } - convert pixel value to data type.
+           available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
+      - { :range, {lo, hi} } - normarilzed range when :dtype is "<f4".
+           default range: {0.0, 1.0}
+      - :nchw - transform axes NHWC to NCHW.
+      - :bgr - convert color RGB -> BGR.
+
+  ## Examples
+
+    ```Elixir
+    iex> img = CImg.load("sample.jpg")
+    iex> bin1 = CImg.to_flat(img, [{dtype: "<f4"}, {:range, {-1.0, 1.0}}, :nchw])
+    # convert pixel value to 32bit-float in range -1.0..1.0 and transform axis to NCHW.
+
+    iex> bin2 = CImg.to_flat(img, dtype: "<f4")
+    # convert pixel value to 32bit-float in range 0.0..1.0.
+    ```
+  """
   def to_flat(cimg, opts \\ []) do
     dtype    = Keyword.get(opts, :dtype, "<f4")
     {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
@@ -118,11 +174,6 @@ defmodule CImg do
     with {:ok, bin} <- NIF.cimg_to_bin(cimg, dtype, lo, hi, nchw, bgr) do
       %{descr: dtype, fortran_order: false, shape: {size(cimg)}, data: bin}
     end
-  end
-  
-  @doc "create new image object from float binaries."
-  def create_from_f4bin(x, y, z, c, bin) do
-    create_from_bin(bin, x, y, z, c, "<f4")
   end
 
   def map(cimg, lut, boundary \\ 0) do
@@ -136,7 +187,7 @@ defmodule CImg do
   def draw_box(cimg, x0, y0, x1, y1, rgb) do
     NIF.cimg_draw_box(cimg, x0, y0, x1, y1, rgb)
   end
-  
+
   defdelegate display(cimg, disp),
     to: NIF, as: :cimg_display
   defdelegate fill(cimg, val),
@@ -192,7 +243,7 @@ defmodule CImgDisplay do
     with {:ok, h, _} <- CImg.NIF.cimgdisplay_u8(cimg, title, normalization, is_fullscreen, is_closed),
       do: %CImgDisplay{handle: h}
   end
-  
+
   defdelegate wait(cimgdisplay),
     to: CImg.NIF, as: :cimgdisplay_wait
   defdelegate wait(cimgdisplay, milliseconds),
