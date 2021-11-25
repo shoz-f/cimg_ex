@@ -1,6 +1,6 @@
 defmodule CImgTest do
   use ExUnit.Case
-  doctest CImg
+  #doctest CImg
 
   test "create" do
     img = CImg.load("test/IMG_9458.jpg")
