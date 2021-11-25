@@ -29,7 +29,7 @@ else ifeq (Linux, $(HOSTOS))
     NIF = $(PREFIX)/cimg_nif.so
     LDFLAGS += -lm -lpthread
     ifneq (,$(findstring $(MIX_ENV), dev test))
-        LDFLAGS += -L/usr/X11R6/lib -lpthread
+        LDFLAGS += -L/usr/X11R6/lib -lX11
     else
         CFLAGS  += -Dcimg_display=0
     endif
