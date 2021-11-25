@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-//#define cimg_display    0
+#define cimg_display    0
 #include "CImgEx.h"
 using namespace cimg_library;
 
