@@ -1,4 +1,4 @@
-# CImg
+# cimg_ex
 Light-weight image processing module in Elixir with CImg. This module aims to create auxiliary routines for Deep Learning.
 
 Note: It still has a few image processing functions currentrly.
@@ -51,7 +51,7 @@ $ mix run -e "CImgDemo.demo(2)"
 ```
 
 ## License
-Cimg is licensed under the Apache License Version 2.0.
+cimg_ex is licensed under the Apache License Version 2.0.
 
 #### -- license overview of included 3rd party libraries --
 - The "CImg" Library is licensed under the CeCILL-C/CeCILL.
