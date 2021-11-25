@@ -129,8 +129,8 @@ defmodule CImg do
   @doc """
   create new gray image object from the image object
   """
-  def get_gray(cimg, opt_pn \\ 0) do
-    with {:ok, gray, [shape]} <- NIF.cimg_get_gray(cimg, opt_pn),
+  def make_gray(cimg, opt_pn \\ 0) do
+    with {:ok, gray, [shape]} <- NIF.cimg_make_gray(cimg, opt_pn),
       do: %CImg{handle: gray, shape: shape}
   end
 

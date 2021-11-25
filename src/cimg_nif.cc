@@ -522,7 +522,7 @@ struct NifCImg {
         return argv[0];
     }
 
-    static DECL_NIF(get_gray) {
+    static DECL_NIF(make_gray) {
         CImgT* img;
         int opt_pn;
 
@@ -534,7 +534,7 @@ struct NifCImg {
 
         CImgT* gray;
         try {
-            gray = new CImgT(img->getRGBtoGRAY(opt_pn));
+            gray = new CImgT(img->makeGRAY(opt_pn));
         }
         catch (CImgException& e) {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
@@ -1019,7 +1019,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_get_resize",       3, NifCImgU8::get_resize,              0},
     {"cimg_get_packed",       4, NifCImgU8::get_packed,              0},
     {"cimg_mirror",           2, NifCImgU8::mirror,                  0},
-    {"cimg_get_gray",         2, NifCImgU8::get_gray,                0},
+    {"cimg_make_gray",         2, NifCImgU8::make_gray,              0},
     {"cimg_blur",             4, NifCImgU8::blur,                    0},
     {"cimg_get_crop",        10, NifCImgU8::get_crop,                0},
     {"cimg_draw_graph",       9, NifCImgU8::draw_graph,              0},

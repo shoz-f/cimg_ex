@@ -135,12 +135,12 @@ enum {
     cNEGA
 };
 
-// get a GRAY converted image
-CImg<T> getRGBtoGRAY(int optPN=cPOSI)
+// make a GRAY image
+CImg<T> makeGRAY(int optPN=cPOSI)
 {
     if (_spectrum != 3) {
         throw CImgInstanceException(_cimg_instance
-                                    "getRGBtoGRAY(): Instance is not a RGB image.",
+                                    "makeGRAY(): Instance is not a RGB image.",
                                     cimg_instance);
     }
     CImg<T> res(width(), height(), depth(), 1);

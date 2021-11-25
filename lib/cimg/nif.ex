@@ -30,8 +30,8 @@ defmodule CImg.NIF do
     do: raise("NIF cimg_packed/4 not implemented")
   def cimg_mirror(_c, _axis),
     do: raise("NIF cimg_mirror/2 not implemented")
-  def cimg_get_gray(_c, _pn),
-    do: raise("NIF cimg_get_gray/2 not implemented")
+  def cimg_make_gray(_c, _pn),
+    do: raise("NIF cimg_make_gray/2 not implemented")
   def cimg_blur(_c, _s, _b, _g),
     do: raise("NIF cimg_blur/4 not implemented")
   def cimg_get_crop(_c, _x0, _y0, _z0, _c0, _x1, _y1, _z1, _c1, _b),
