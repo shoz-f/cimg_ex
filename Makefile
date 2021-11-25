@@ -8,23 +8,25 @@ calling_from_make:
 	mix compile
 endif
 
+HOSTOS = $(shell uname -s)
+
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
-ifeq ($(shell uname -s),Linux)
-    NIF = $(PREFIX)/cimg_nif.so
-else
-    NIF = $(PREFIX)/cimg_nif.dll
-endif
-
 LIB_CIMG = src/3rd_party/CImg
 LIB_STB  = src/3rd_party/stb
-#CFLAGS  ?= -O2 -Wall -Wextra -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -pedantic -fPIC
-CFLAGS  ?= -O2 -Wall -Wno-unused-parameter -Isrc -I$(LIB_CIMG) -I$(LIB_STB) -pedantic -fPIC
-LDFLAGS += -fPIC -shared -lgdi32 #-ljpeg #-Wl,--out-implib,a.lib
 
-#(MinGW) g++ -o hello_world.exe hello_world.cpp -O2 -lgdi32
-#(LINUX) g++ -o hello_world.exe hello_world.cpp -O2 -L/usr/X11R6/lib -lm -lpthread -lX11
+CFLAGS  ?= -O2 -Isrc -I$(LIB_CIMG) -I$(LIB_STB) -pedantic -fPIC
+LDFLAGS ?= -shared
+ifneq (,$(findstring MSYS_NT,$(HOSTOS)))
+    NIF = $(PREFIX)/cimg_nif.dll
+    LDFLAGS += -lgdi32
+else ifeq (Linux, $(HOSTOS))
+    NIF = $(PREFIX)/cimg_nif.so
+    LDFLAGS += -L/usr/X11R6/lib -lm -lpthread -lX11
+else
+    $(error Not available system "$(HOSTOS)")
+endif
 
 # Set Erlang-specific compile and linker flags
 ERL_CFLAGS  ?= -I"$(ERL_EI_INCLUDE_DIR)"
