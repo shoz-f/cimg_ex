@@ -212,25 +212,8 @@ defmodule CImg do
     to: NIF, as: :cimg_size
   defdelegate transfer(cimg, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0),
     to: NIF, as: :cimg_transfer
-end
-
-
-defmodule CImgMap do
-  alias __MODULE__
-
-  # image object
-  defstruct handle: nil, shape: {}
-
-  @doc "load the image file and create new image object."
-  def create(x, y, z, c, list) when is_list(list) do
-    with {:ok, h, [shape]} <- CImg.NIF.cimgmap_create(x, y, z, c, list),
-      do: %CImgMap{handle: h, shape: shape}
-  end
-
-  defdelegate set(val, cimgmap, x, y \\ 0, z \\ 0, c \\ 0),
-    to: CImg.NIF, as: :cimgmap_set
-  defdelegate get(cimgmap, x, y \\ 0, z \\ 0, c \\ 0),
-    to: CImg.NIF, as: :cimgmap_get
+  defdelegate threshold(cimg, val, soft \\ false, strict \\ false),
+    to: NIF, as: :cimg_threshold
 end
 
 

@@ -12,7 +12,6 @@
 
 #include <stdio.h>
 
-#define cimg_display    0
 #include "CImgEx.h"
 using namespace cimg_library;
 
@@ -966,16 +965,35 @@ struct NifCImg {
 
         return argv[0];
     }
+
+    static DECL_NIF(threshold);
 };
 
 
+template <class T> DECL_NIF(NifCImg<T>::threshold) {
+        CImgT* img;
+        T     value;
+        bool  soft_threshold;
+        bool  strict_threshold;
+
+        if (argc != 4
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_value(env, argv[1], &value)
+        ||  !enif_get_bool(env, argv[2], &soft_threshold)
+        ||  !enif_get_bool(env, argv[3], &strict_threshold)) {
+            return enif_make_badarg(env);
+        }
+
+        img->threshold(value, soft_threshold, strict_threshold);
+
+        return argv[0];
+    }
+
 typedef NifCImg<unsigned char> NifCImgU8;
-typedef NifCImg<int>            NifCImgMap;
 
 int load(ErlNifEnv *env, void **priv_data, ERL_NIF_TERM load_info)
 {
     NifCImgU8::init_resource_type(env, "cimg");
-    NifCImgMap::init_resource_type(env, "cimgmap");
 #if cimg_display != 0
     NifCImgDisplay::init_resource_type(env, "cimgdisplay");
 #endif
@@ -1013,10 +1031,7 @@ static ErlNifFunc nif_funcs[] = {
     {"cimg_to_bin",           6, NifCImgU8::to_bin,                  0},
     {"cimg_map",              3, NifCImgU8::map,                     0},
     {"cimg_transfer",         6, NifCImgU8::transfer,                0},
-
-    {"cimgmap_create",        5, NifCImgMap::create_list,            0},
-    {"cimgmap_set",           6, NifCImgMap::set,                    0},
-    {"cimgmap_get",           5, NifCImgMap::get,                    0},
+    {"cimg_threshold",        4, NifCImgU8::threshold,               0},
 
 #if cimg_display != 0
     {"cimgdisplay_u8",        5, NifCImgDisplay::create<NifCImgU8>,  0},

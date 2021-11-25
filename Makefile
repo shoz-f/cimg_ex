@@ -21,15 +21,17 @@ LDFLAGS ?= -shared
 ifneq (,$(findstring MSYS_NT,$(HOSTOS)))
     NIF = $(PREFIX)/cimg_nif.dll
     ifneq (,$(findstring $(MIX_ENV), dev test))
-        CFLAGS  += -Dcimg_display=1
         LDFLAGS += -lgdi32
+    else
+        CFLAGS  += -Dcimg_display=0
     endif
 else ifeq (Linux, $(HOSTOS))
     NIF = $(PREFIX)/cimg_nif.so
     LDFLAGS += -lm -lpthread
     ifneq (,$(findstring $(MIX_ENV), dev test))
-        CFLAGS  += -Dcimg_display=1
         LDFLAGS += -L/usr/X11R6/lib -lpthread
+    else
+        CFLAGS  += -Dcimg_display=0
     endif
 else
     $(error Not available system "$(HOSTOS)")
@@ -44,7 +46,6 @@ HEADERS =$(wildcard src/*.h)
 OBJ = $(SRC:src/%.cc=$(BUILD)/%.o)
 
 all: install
-	@echo $(MIX_ENV)
 
 install: $(PREFIX) $(BUILD) $(LIB_CIMG) $(LIB_STB) $(NIF)
 

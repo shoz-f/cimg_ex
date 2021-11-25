@@ -66,14 +66,9 @@ defmodule CImg.NIF do
     do: raise("NIF cimg_transfer/6 not implemented")
   def cimg_map(_c, _lut, _boundary),
     do: raise("NIF cimg_map/3 not implemented")
+  def cimg_threshold(_c, _val, _soft, _strict),
+    do: raise("NIF cimg_threshold/4 not implemented")
 
-
-  def cimgmap_create(_x, _y, _z, _c, _list),
-    do: raise("NIF cimgmap_create/5 not implemented")
-  def cimgmap_set(_val, _cimgu8, _x, _y, _z, _c),
-    do: raise("NIF cimgmap_set/6 not implemented")
-  def cimgmap_get(_cimgu8, _x, _y, _z, _c),
-    do: raise("NIF cimgmap_get/5 not implemented")
 
   def cimgdisplay_u8(_cimgu8, _title, _normalization, _is_fullscreen, _is_close),
     do: raise("NIF cimgdisplay_u8/5 not implemented")
