@@ -2,31 +2,953 @@
 /**
 * cimg_nif.h
 *
-* Elixir/Erlang extension module: CImg
+* Elixir/Erlang extension module: CImg functions
 * @author Shozo Fukuda
-* @date	  Thu Nov 25 18:45:58 JST 2021
-* System  MINGW64/Windows, Ubuntu/WSL2<br>
+* @date	  Sun Dec 06 10:10:35 JST 2020
+* System  MINGW64/Windows 10, Ubuntu/WSL2<br>
 *
 **/
 /**************************************************************************{{{*/
 
-#include "CImgEx.h"
-#include "my_erl_nif.h"
+template <class T>
+struct NifCImg {
 
-// 認識アプリ・パッケージ
-//namespace RC_APP_package {
-	
-/*---     定数定義     ---*/
+    typedef CImg<T> CImgT;
 
-/*---      型定義      ---*/
+    /**********************************************************************}}}*/
+    /* Resource handling                                                      */
+    /**********************************************************************{{{*/
+    static void init_resource_type(ErlNifEnv* env, const char* name)
+    {
+        Resource<CImgT>::init_resource_type(env, name);
+    }
 
-/*---    マクロ定義    ---*/
+    static int enif_get_image(ErlNifEnv* env, ERL_NIF_TERM term, CImgT** img)
+    {
+        ERL_NIF_TERM  key;
+        ERL_NIF_TERM  handle;
+        return enif_make_existing_atom(env, "handle", &key, ERL_NIF_LATIN1)
+                && enif_get_map_value(env, term, key, &handle)
+                && Resource<CImgT>::get_item(env, handle, img);
+    }
 
-/*---  外部モジュール  ---*/
+    static ERL_NIF_TERM enif_make_image(ErlNifEnv* env, CImgT* img)
+    {
+        return Resource<CImgT>::make_resource(env, img);
+    }
 
-/*---     外部変数     ---*/
+    /**********************************************************************}}}*/
+    /* Image creation functions                                               */
+    /**********************************************************************{{{*/
+    static DECL_NIF(create) {
+        unsigned int size_x, size_y, size_z, size_c;
+        T value;
 
-/*---     内部変数     ---*/
+        if (argc != 5
+        ||  !enif_get_uint(env, argv[0], &size_x)
+        ||  !enif_get_uint(env, argv[1], &size_y)
+        ||  !enif_get_uint(env, argv[2], &size_z)
+        ||  !enif_get_uint(env, argv[3], &size_c)
+        ||  !enif_get_value(env, argv[4], &value)) {
+            return enif_make_badarg(env);
+        }
 
-/*---  内部モジュール  ---*/
+        CImgT* img;
+        try {
+            img = new CImgT(size_x, size_y, size_z, size_c, value);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
 
+        return enif_make_image(env, img);
+    }
+
+    static DECL_NIF(create_from_bin) {
+        std::string dtype;
+        unsigned int size_x, size_y, size_z, size_c;
+        ErlNifBinary bin;
+
+        if (argc != 6
+        ||  !enif_inspect_binary(env, argv[0], &bin)
+        ||  !enif_get_uint(env, argv[1], &size_x)
+        ||  !enif_get_uint(env, argv[2], &size_y)
+        ||  !enif_get_uint(env, argv[3], &size_z)
+        ||  !enif_get_uint(env, argv[4], &size_c)
+        ||  !enif_get_str(env, argv[5], &dtype)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT(size_x, size_y, size_z, size_c);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        if (dtype == "<f4" &&  bin.size == size_x*size_y*size_z*size_c*sizeof(float)) {
+			float *p = reinterpret_cast<float*>(bin.data);
+			cimg_forXY(*img, x, y) {
+			cimg_forC(*img, c) {
+				(*img)(x, y, c) = static_cast<T>(256*(*p++)+0.5);
+			}}
+		}
+		else if (dtype == "<u1" &&  bin.size == size_x*size_y*size_z*size_c) {
+			unsigned char *p = reinterpret_cast<unsigned char*>(bin.data);
+			cimg_forXY(*img, x, y) {
+			cimg_forC(*img, c) {
+				(*img)(x, y, c) = static_cast<T>(*p++);
+			}}
+    	}
+    	else {
+            return enif_make_badarg(env);
+    	}
+
+        return enif_make_image(env, img);
+    }
+
+    static DECL_NIF(create_list) {
+        unsigned int size_x, size_y, size_z, size_c;
+
+        if (argc != 5
+        ||  !enif_get_uint(env, argv[0], &size_x)
+        ||  !enif_get_uint(env, argv[1], &size_y)
+        ||  !enif_get_uint(env, argv[2], &size_z)
+        ||  !enif_get_uint(env, argv[3], &size_c)
+        ||  !enif_is_list(env, argv[4])) {
+            return enif_make_badarg(env);
+        }
+        
+        ERL_NIF_TERM list = argv[4];
+        unsigned int len;
+        if (!enif_get_list_length(env, list, &len)
+        ||  len != size_x*size_y*size_z*size_c) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT(size_x, size_y, size_z, size_c);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        cimg_for(*img,ptr,T) {
+            ERL_NIF_TERM item;
+            int val;
+            if (!enif_get_list_cell(env, list, &item, &list)
+            ||  !enif_get_int(env, item, &val)) {
+                return enif_make_badarg(env);
+            }
+            *ptr = val;
+        }
+
+        return enif_make_image(env, img);
+    }
+
+    static DECL_NIF(duplicate) {
+        CImgT* src;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &src)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT(*src);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, img);
+    }
+
+    /**********************************************************************}}}*/
+    /* load/save functions                                                    */
+    /**********************************************************************{{{*/
+    static DECL_NIF(load) {
+        std::string fname;
+
+        if (argc != 1
+        ||  !enif_get_str(env, argv[0], &fname)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT(fname.c_str());
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, img);
+    }
+
+    static DECL_NIF(save) {
+        CImgT* img;
+        std::string fname;
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_str(env, argv[1], &fname)) {
+            return enif_make_badarg(env);
+        }
+
+        img->save(fname.c_str());
+
+        return enif_make_ok(env);
+    }
+    
+    static DECL_NIF(load_from_memory) {
+        ErlNifBinary bin;
+        if (argc != 1
+        ||  !enif_inspect_binary(env, argv[0], &bin)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* img;
+        try {
+            img = new CImgT();
+            img->load_from_memory((const unsigned char*)bin.data, bin.size);
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, img);
+    }
+
+    /**********************************************************************}}}*/
+    /* PIXEL operations                                                       */
+    /**********************************************************************{{{*/
+    static MUT DECL_NIF(set) {
+        CImgT* img;
+        unsigned int x, y, z, c;
+        T val;
+
+        if (argc != 6
+        ||  !enif_get_value(env, argv[0], &val)
+        ||  !enif_get_image(env, argv[1], &img)
+        ||  !enif_get_uint(env, argv[2], &x)
+        ||  !enif_get_uint(env, argv[3], &y)
+        ||  !enif_get_uint(env, argv[4], &z)
+        ||  !enif_get_uint(env, argv[5], &c)) {
+            return enif_make_badarg(env);
+        }
+
+        (*img)(x, y, z, c) = val;
+
+        return argv[0];
+    }
+
+    static DECL_NIF(get) {
+        CImgT* img;
+        unsigned int x, y, z, c;
+        T val;
+
+        if (argc != 5
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_uint(env, argv[1], &x)
+        ||  !enif_get_uint(env, argv[2], &y)
+        ||  !enif_get_uint(env, argv[3], &z)
+        ||  !enif_get_uint(env, argv[4], &c)) {
+            return enif_make_badarg(env);
+        }
+
+        val = (*img)(x, y, z, c);
+
+        return enif_make_value(env, val);
+    }
+
+    static DECL_NIF(assign) {
+        CImgT* dst;
+        CImgT* src;
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &dst)
+        ||  !enif_get_image(env, argv[1], &src)){
+            return enif_make_badarg(env);
+        }
+
+        *dst = *src;
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(fill) {
+        CImgT* img;
+        T val;
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_value(env, argv[1], &val)) {
+            return enif_make_badarg(env);
+        }
+
+        img->fill(val);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(clear) {
+        CImgT* img;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        img->clear();
+        
+        return argv[0];
+    }
+
+    /**********************************************************************}}}*/
+    /* get Image attribute functions                                          */
+    /**********************************************************************{{{*/
+    static DECL_NIF(shape) {
+        CImgT* img;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        return enif_make_tuple4(env,
+            enif_make_int(env, img->width()),
+            enif_make_int(env, img->height()),
+            enif_make_int(env, img->depth()),
+            enif_make_int(env, img->spectrum()));
+    }
+
+    static DECL_NIF(size) {
+        CImgT* img;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        return enif_make_ulong(env, img->size());
+    }
+
+    static MUT DECL_NIF(resize) {
+        CImgT* img;
+        int width, height;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &width)
+        ||  !enif_get_int(env, argv[2], &height)) {
+            return enif_make_badarg(env);
+        }
+
+        img->resize(width, height, -100, -100, 3);
+
+        return argv[0];
+    }
+
+    static DECL_NIF(get_resize) {
+        CImgT* img;
+        int width, height;
+        int align;
+        int filling;
+
+        if (argc != 5
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &width)
+        ||  !enif_get_int(env, argv[2], &height)
+        ||  !enif_get_int(env, argv[3], &align)
+        ||  !enif_get_int(env, argv[4], &filling)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* resize;
+        try {
+            if (align == 0) {
+                resize = new CImgT(img->get_resize(width, height, -100, -100, 3));
+            }
+            else if (align == 1 || align == 2) {
+                resize = new CImgT(width, height, img->depth(), img->spectrum(), filling);
+
+                double ratio_w = (double)width/img->width();
+                double ratio_h = (double)height/img->height();
+
+                if (ratio_w <= ratio_h) {
+                    // there is a gap in the vertical direction.
+                    CImgT tmp_img(img->get_resize(width, ratio_w*img->height(), -100, -100, 3));
+
+                    resize->draw_image(0, (align == 1) ? 0 : (height-tmp_img.height()), tmp_img);
+                }
+                else {
+                    // there is a gap in the horizontal direction.
+                    CImgT tmp_img(img->get_resize(ratio_h*img->width(), height, -100, -100, 3));
+
+                    resize->draw_image((align == 1) ? 0 : (width-tmp_img.width()), 0, tmp_img);
+                }
+            }
+            else {
+                return enif_make_badarg(env);
+            }
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, resize);
+    }
+
+    static MUT DECL_NIF(mirror) {
+        CImgT* img;
+        char axis[2];
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_atom(env, argv[1], axis, 2, ERL_NIF_LATIN1)
+        ||  (axis[0] != 'x' && axis[0] != 'y')) {
+            return enif_make_badarg(env);
+        }
+
+        img->mirror(axis[0]);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(transpose) {
+        CImgT* img;
+
+        if (argc != 1
+        ||  !enif_get_image(env, argv[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        img->transpose();
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(threshold) {
+        CImgT* img;
+        T     value;
+        bool  soft_threshold;
+        bool  strict_threshold;
+
+        if (argc != 4
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_value(env, argv[1], &value)
+        ||  !enif_get_bool(env, argv[2], &soft_threshold)
+        ||  !enif_get_bool(env, argv[3], &strict_threshold)) {
+            return enif_make_badarg(env);
+        }
+
+        img->threshold(value, soft_threshold, strict_threshold);
+
+        return argv[0];
+    }
+
+    static DECL_NIF(get_gray) {
+        CImgT* img;
+        int opt_pn;
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &opt_pn)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* gray;
+        try {
+            gray = new CImgT(img->getGRAY(opt_pn));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, gray);
+    }
+
+    static MUT DECL_NIF(blur) {
+        CImgT* img;
+        double sigma;
+        bool   boundary_conditions;
+        bool   is_gaussian;
+
+        if (argc != 4
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_double(env, argv[1], &sigma)
+        ||  !enif_get_bool(env, argv[2], &boundary_conditions)
+        ||  !enif_get_bool(env, argv[3], &is_gaussian)) {
+            return enif_make_badarg(env);
+        }
+
+        img->blur(sigma, boundary_conditions, is_gaussian);
+
+        return argv[0];
+    }
+
+    static DECL_NIF(get_crop) {
+        CImgT* img;
+        int x0, y0, z0, c0;
+        int x1, y1, z1, c1;
+        unsigned int boundary_conditions;
+
+        if (argc != 10
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &z0)
+        ||  !enif_get_int(env, argv[4], &c0)
+        ||  !enif_get_int(env, argv[5], &x1)
+        ||  !enif_get_int(env, argv[6], &y1)
+        ||  !enif_get_int(env, argv[7], &z1)
+        ||  !enif_get_int(env, argv[8], &c1)
+        ||  !enif_get_uint(env, argv[9], &boundary_conditions)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* crop;
+        try {
+            crop = new CImgT(img->get_crop(x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, crop);
+    }
+
+    /**********************************************************************}}}*/
+    /* drawing shape functions                                                */
+    /**********************************************************************{{{*/
+    static MUT DECL_NIF(draw_graph) {
+        CImgT* img;
+        CImgT* data;
+        unsigned char color[3];
+        double opacity;
+        unsigned int plot_type;
+        int           vertex_type;
+        double        ymin;
+        double        ymax;
+        unsigned int pattern;
+
+        if (argc != 9
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_image(env, argv[1], &data)
+        ||  !enif_get_color(env, argv[2], color)
+        ||  !enif_get_number(env, argv[3], &opacity)
+        ||  !enif_get_uint(env, argv[4], &plot_type)
+        ||  !enif_get_int(env, argv[5], &vertex_type)
+        ||  !enif_get_number(env, argv[6], &ymin)
+        ||  !enif_get_number(env, argv[7], &ymax)
+        ||  !enif_get_uint(env, argv[8], &pattern)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_graph(*data, color, opacity, plot_type, vertex_type, ymin, ymax, pattern);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_circle)
+    {
+        CImgT* img;
+        int x0;
+        int y0;
+        int radius;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 7
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &radius)
+        ||  !enif_get_color(env, argv[4], color)
+        ||  !enif_get_number(env, argv[5], &opacity)
+        ||  !enif_get_uint(env, argv[6], &pattern)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_circle(x0, y0, radius, color, opacity, pattern);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_circle_filled) {
+        CImgT* img;
+        int x0;
+        int y0;
+        int radius;
+        unsigned char color[3];
+        double opacity;
+
+        if (argc != 6
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &radius)
+        ||  !enif_get_color(env, argv[4], color)
+        ||  !enif_get_number(env, argv[5], &opacity)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_circle(x0, y0, radius, color, opacity);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_rectangle) {
+        CImgT* img;
+        int  x0, y0, x1, y1;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 8
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &x1)
+        ||  !enif_get_int(env, argv[4], &y1)
+        ||  !enif_get_color(env, argv[5], color)
+        ||  !enif_get_number(env, argv[6], &opacity)
+        ||  !enif_get_uint(env, argv[7], &pattern)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_rectangle(x0, y0, x1, y1, color, opacity, pattern);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_rectangle_filled) {
+        CImgT* img;
+        int  x0, y0, x1, y1;
+        unsigned char color[3];
+        double opacity;
+
+        if (argc != 7
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &x1)
+        ||  !enif_get_int(env, argv[4], &y1)
+        ||  !enif_get_color(env, argv[5], color)
+        ||  !enif_get_number(env, argv[6], &opacity)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_rectangle(x0, y0, x1, y1, color, opacity);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_ratio_rectangle) {
+        CImgT* img;
+        double x0, y0, x1, y1;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 8
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_double(env, argv[1], &x0)
+        ||  !enif_get_double(env, argv[2], &y0)
+        ||  !enif_get_double(env, argv[3], &x1)
+        ||  !enif_get_double(env, argv[4], &y1)
+        ||  !enif_get_color(env, argv[5], color)
+        ||  !enif_get_number(env, argv[6], &opacity)
+        ||  !enif_get_uint(env, argv[7], &pattern)) {
+            return enif_make_badarg(env);
+        }
+
+        int width  = img->width();
+        int height = img->height();
+
+        int ix0 = x0*width;
+        int iy0 = y0*height;
+        int ix1 = x1*width;
+        int iy1 = y1*height;
+
+        img->draw_rectangle(ix0, iy0, ix1, iy1, color, opacity, pattern);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_triangle) {
+        CImgT* img;
+        int  x0, y0, x1, y1, x2, y2;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 10
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &x1)
+        ||  !enif_get_int(env, argv[4], &y1)
+        ||  !enif_get_int(env, argv[5], &x2)
+        ||  !enif_get_int(env, argv[6], &y2)
+        ||  !enif_get_color(env, argv[7], color)
+        ||  !enif_get_number(env, argv[8], &opacity)
+        ||  !enif_get_uint(env, argv[9], &pattern)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_triangle(x0, y0, x1, y1, x2, y2, color, opacity, pattern);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_triangle_filled) {
+        CImgT* img;
+        int  x0, y0, x1, y1, x2, y2;
+        unsigned char color[3];
+        double opacity;
+
+        if (argc != 9
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_int(env, argv[1], &x0)
+        ||  !enif_get_int(env, argv[2], &y0)
+        ||  !enif_get_int(env, argv[3], &x1)
+        ||  !enif_get_int(env, argv[4], &y1)
+        ||  !enif_get_int(env, argv[5], &x2)
+        ||  !enif_get_int(env, argv[6], &y2)
+        ||  !enif_get_color(env, argv[7], color)
+        ||  !enif_get_number(env, argv[8], &opacity)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_triangle(x0, y0, x1, y1, x2, y2, color, opacity);
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(draw_image)
+    {
+        CImgT* img;
+        CImgT* mask;
+        double opacity;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_image(env, argv[1], &mask)
+        ||  !enif_get_number(env, argv[2], &opacity)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_image(*mask, opacity);
+
+    	return argv[0];
+    }
+
+    static DECL_NIF(map_color) {
+        CImgT* img;
+        std::string lut_name;
+        unsigned int boundary_conditions;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_str(env, argv[1], &lut_name)
+        ||  !enif_get_uint(env, argv[2], &boundary_conditions)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT lut;
+        if (lut_name == "default")     { lut = CImgT::default_LUT256(); }
+        else if (lut_name == "lines") { lut = CImgT::lines_LUT256();   }
+        else if (lut_name == "hot")   { lut = CImgT::hot_LUT256();     }
+        else if (lut_name == "cool")  { lut = CImgT::cool_LUT256();    }
+        else if (lut_name == "jet")   { lut = CImgT::jet_LUT256();     }
+        else {
+        	return enif_make_badarg(env);
+        }
+
+        CImgT* map;
+        try {
+            map = new CImgT(img->map(lut, boundary_conditions));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+        
+        return enif_make_image(env, map);
+    }
+
+    static DECL_NIF(display) {
+#if cimg_display != 0
+        CImgT* img;
+        CImgDisplay* disp;
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !NifCImgDisplay::enif_get_display(env, argv[1], &disp)) {
+            return enif_make_badarg(env);
+        }
+
+        img->display(*disp);
+#endif
+
+        return argv[0];
+    }
+
+    static DECL_NIF(to_bin) {
+        CImgT*      img;
+        std::string dtype;
+        double     lo, hi;
+        bool        nchw;    // to transpose NCHW
+        bool        bgr;     // to convert RGB to BGR
+
+        if (argc != 6
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_str(env, argv[1], &dtype)
+        ||  !enif_get_double(env, argv[2], &lo)
+        ||  !enif_get_double(env, argv[3], &hi)
+        ||  !enif_get_bool(env, argv[4], &nchw)
+        ||  !enif_get_bool(env, argv[5], &bgr)) {
+            return enif_make_badarg(env);
+        }
+
+        // select BGR convertion
+        int color[4] = {0,1,2,3};
+        if (bgr && img->spectrum() >= 3) {
+            int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
+        }
+
+        ERL_NIF_TERM binary;
+        if (dtype == "<f4") {
+            float* buff = reinterpret_cast<float*>(enif_make_new_binary(env, 4*img->size(), &binary));
+            if (buff == NULL) {
+                return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+            }
+            
+            // normalization coefficient
+            double a = (hi - lo)/255.0;
+            double b = lo;
+
+            if (nchw) {
+                cimg_forC(*img, c) cimg_forXY(*img, x, y) {
+                    *buff++ = a*((*img)(x, y, color[c])) + b;
+                }
+            }
+            else {
+                cimg_forXY(*img, x, y) cimg_forC(*img, c) {
+                    *buff++ = a*((*img)(x, y, color[c])) + b;
+                }
+            }
+        }
+        else {
+            unsigned char* buff = enif_make_new_binary(env, img->size(), &binary);
+            if (buff == NULL) {
+                return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+            }
+
+            if (nchw) {
+                cimg_forC(*img, c) cimg_forXY(*img, x, y) {
+                    *buff++ = (*img)(x, y,  color[c]);
+                }
+            }
+            else {
+                cimg_forXY(*img, x, y) cimg_forC(*img, c) {
+                    *buff++ = (*img)(x, y,  color[c]);
+                }
+            }
+        }
+
+        return enif_make_tuple2(env, enif_make_ok(env), binary);
+    }
+
+    static DECL_NIF(transfer) {
+        CImgT* dst;
+        CImgT* src;
+        int cx, cy, cz;
+
+        if (argc != 6
+        ||  !enif_get_image(env, argv[0], &dst)
+        ||  !enif_get_image(env, argv[1], &src)
+        ||  !enif_is_list(env, argv[2])
+        ||  !enif_get_int(env, argv[3], &cx)
+        ||  !enif_get_int(env, argv[4], &cy)
+        ||  !enif_get_int(env, argv[5], &cz)) {
+            return enif_make_badarg(env);
+        }
+
+        ERL_NIF_TERM address = argv[2];
+        ERL_NIF_TERM head;
+        while (enif_get_list_cell(env, address, &head, &address)) {
+            int ality;
+            const ERL_NIF_TERM* pair;
+            int q[3], p[3];
+            if (!enif_get_tuple(env, head, &ality, &pair)
+            ||  ality != 2
+            ||  !enif_get_pos(env, pair[0], q)
+            ||  !enif_get_pos(env, pair[1], p)) {
+                continue;
+            }
+
+            q[0] += cx; q[1] += cy; q[2] += cz;
+            p[0] += cx; p[1] += cy; p[2] += cz;
+
+            if (dst->containsXYZC(q[0], q[1], q[2]) && src->containsXYZC(p[0], p[1], p[2])) {
+                cimg_forC(*src, c) {
+                    (*dst)(q[0], q[1], q[2], c) = (*src)(p[0], p[1], p[2], c);
+                }
+            }
+        }
+
+        return argv[0];
+    }
+
+    static MUT DECL_NIF(transfer3) {
+        CImgT* dst;
+        CImgT* src;
+        int p[3];
+        CImg<int>* map;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &dst)
+        ||  !enif_get_image(env, argv[1], &src)
+        ||  !enif_get_pos(env, argv[2], p)
+        ||  !NifCImg<int>::enif_get_image(env, argv[3], &map)){
+            return enif_make_badarg(env);
+        }
+
+        ERL_NIF_TERM address = argv[3];
+        ERL_NIF_TERM head;
+        while (enif_get_list_cell(env, address, &head, &address)) {
+            int ality;
+            const ERL_NIF_TERM* pair;
+            if (!enif_get_tuple(env, head, &ality, &pair)
+            ||  ality != 2
+            ||  !enif_is_list(env, pair[0])
+            ||  !enif_is_list(env, pair[1])) {
+                continue;
+            }
+
+            int q[3], p[3];
+            if (!enif_get_pos(env, pair[0], q)
+            ||  !enif_get_pos(env, pair[1], p)) {
+                continue;
+            }
+
+            if (dst->containsXYZC(q[0], q[1], q[2]) && src->containsXYZC(p[0], p[1], p[2])) {
+                cimg_forC(*src, c) {
+                    (*dst)(q[0], q[1], q[2], c) = (*src)(p[0], p[1], p[2], c);
+                }
+            }
+        }
+
+        return argv[0];
+    }
+
+    static DECL_NIF(runit);
+};
+
+/*** cimg_nif.h ***********************************************************}}}*/

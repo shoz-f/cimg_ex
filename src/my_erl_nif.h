@@ -3,6 +3,7 @@
 
 /***** NIFs HELPER *****/
 #define DECL_NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+#define MUT
 
 /***  Module Header  ******************************************************}}}*/
 /**
@@ -72,6 +73,26 @@ int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
 
 /***  Module Header  ******************************************************}}}*/
 /**
+* convert int or double term to int
+* @par description
+*   convert the number term to int.
+*
+* @return succeed or fail
+**/
+/**************************************************************************{{{*/
+int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, int* val)
+{
+    double fval;
+    if (enif_get_double(env, term, &fval)) {
+        *val = fval;
+        return true;
+    }
+    
+    return enif_get_int(env, term, val);
+}
+
+/***  Module Header  ******************************************************}}}*/
+/**
 * convert binary term to string
 * @par description
 *   convert the binary term to std::string.
@@ -112,6 +133,20 @@ struct Resource {
         if (!res->m_item) {
             delete res->m_item;
         }
+    }
+
+    static ERL_NIF_TERM make_resource(ErlNifEnv* env, T* item)
+    {
+        Resource<T>* res = new(enif_alloc_resource(_ResType, sizeof(Resource<T>))) Resource<T>;
+        if (!res) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Faild to allocate resource", ERL_NIF_LATIN1));
+        }
+        res->m_item = item;
+
+        ERL_NIF_TERM term = enif_make_resource(env, res);
+        enif_release_resource(res);
+
+        return enif_make_tuple2(env, enif_make_ok(env), term);
     }
 
     static ERL_NIF_TERM make_resource(ErlNifEnv* env, T* item, ERL_NIF_TERM opts)

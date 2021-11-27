@@ -5,12 +5,16 @@
 * Elixir/Erlang extension module: CImgDisplay functions
 * @author Shozo Fukuda
 * @date	  Wed Jul 07 16:36:26 JST 2021
-* System  MINGW64/Windows 10<br>
+* System  MINGW64/Windows 10, Ubuntu/WSL2<br>
 *
 **/
 /**************************************************************************{{{*/
 
 namespace NifCImgDisplay {
+
+    /**********************************************************************}}}*/
+    /* Resource handling                                                      */
+    /**********************************************************************{{{*/
     void init_resource_type(ErlNifEnv* env, const char* name)
     {
         Resource<CImgDisplay>::init_resource_type(env, name);
@@ -51,7 +55,7 @@ namespace NifCImgDisplay {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
         }
 
-        return Resource<CImgDisplay>::make_resource(env, display, enif_make_list(env, 0));
+        return Resource<CImgDisplay>::make_resource(env, display);
     }
 
     DECL_NIF(wait) {

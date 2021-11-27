@@ -129,14 +129,59 @@ const CImg<T>& save_stb_image_jpeg(const char *const filename, const unsigned in
   return *this;
 }
 
+CImg<T>& load_from_memory(unsigned char const *buffer, int len)
+{
+  int x, y, n;
+  unsigned char* data = stbi_load_from_memory(buffer, len, &x, &y, &n, 0);
+  if (data == NULL) {
+    throw CImgIOException(_cimg_instance
+                          "load_stb_image_jpeg: %s.",
+                          cimg_instance, stbi_failure_reason());
+  }
+
+  try { assign(x, y, 1, n); } catch (...) { throw; }
+
+  T *ptr_r = _data,
+    *ptr_g = _data + 1UL*_width*_height,
+    *ptr_b = _data + 2UL*_width*_height,
+    *ptr_a = _data + 3UL*_width*_height;
+  const unsigned char *ptrs = data;
+  switch (_spectrum) {
+  case 1:
+    cimg_forXY(*this, x, y) {
+      *(ptr_r++) = (T)*(ptrs++);
+    }
+    break;
+  case 3:
+    cimg_forXY(*this, x, y) {
+      *(ptr_r++) = (T)*(ptrs++);
+      *(ptr_g++) = (T)*(ptrs++);
+      *(ptr_b++) = (T)*(ptrs++);
+    }
+    break;
+  case 4:
+    cimg_forXY(*this, x, y) {
+      *(ptr_r++) = (T)*(ptrs++);
+      *(ptr_g++) = (T)*(ptrs++);
+      *(ptr_b++) = (T)*(ptrs++);
+      *(ptr_a++) = (T)*(ptrs++);
+    }
+    break;
+  }
+  
+  stbi_image_free(data);
+
+  return *this;
+}
+
 // option: image convert POSI/NEGA 
 enum {
     cPOSI = 0,
     cNEGA
 };
 
-// make a GRAY image
-CImg<T> makeGRAY(int optPN=cPOSI)
+// create the GRAY image
+CImg<T> getGRAY(int optPN=cPOSI)
 {
     if (_spectrum != 3) {
         throw CImgInstanceException(_cimg_instance
