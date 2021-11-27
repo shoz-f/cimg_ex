@@ -13,8 +13,9 @@ HOSTOS = $(shell uname -s)
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
-LIB_CIMG = deps/CImg
-LIB_STB  = deps/stb
+DOWNLOAD = ./3d_party
+LIB_CIMG = $(DOWNLOAD)/CImg
+LIB_STB  = $(DOWNLOAD)/stb
 
 CFLAGS  ?= -O2 -Isrc -I$(LIB_CIMG) -I$(LIB_STB) -pedantic -fPIC
 LDFLAGS ?= -shared
@@ -47,7 +48,7 @@ OBJ = $(SRC:src/%.cc=$(BUILD)/%.o)
 
 all: install
 
-install: $(PREFIX) $(BUILD) $(LIB_CIMG) $(LIB_STB) $(NIF)
+install: $(PREFIX) $(BUILD) $(DOWNLOAD) $(LIB_CIMG) $(LIB_STB) $(NIF)
 
 $(OBJ): $(HEADERS) Makefile
 
@@ -61,6 +62,9 @@ $(PREFIX):
 	mkdir -p $@
 
 $(BUILD):
+	mkdir -p $@
+
+$(DOWNLOAD):
 	mkdir -p $@
 
 $(LIB_CIMG):
