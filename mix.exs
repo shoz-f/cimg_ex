@@ -14,7 +14,7 @@ defmodule Cimg.MixProject do
       
       description: description(),
       package: package(),
-      name: "cimg_ex",
+      #name: "cimg",
       source_url: "https://github.com/shoz-f/cimg_ex.git"
     ]
   end
@@ -40,7 +40,7 @@ defmodule Cimg.MixProject do
 
   defp package() do
     [
-       name: "cimg_ex",
+      name: "cimg",
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/shoz-f/cimg_ex.git"}
     ]
