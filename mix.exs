@@ -10,7 +10,12 @@ defmodule Cimg.MixProject do
       make_executable: "make",
       make_clean: ["clean"],
       compilers: [:elixir_make] ++ Mix.compilers(),
-      deps: deps()
+      deps: deps(),
+      
+      description: description(),
+      package: package(),
+      name: "cimg_ex",
+      source_url: "https://github.com/shoz-f/cimg_ex.git"
     ]
   end
 
@@ -26,6 +31,18 @@ defmodule Cimg.MixProject do
     [
       {:elixir_make, "~> 0.6.2", runtime: false},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false},
+    ]
+  end
+
+  defp description() do
+    "Light-weight image processing module in Elixir with CImg."
+  end
+
+  defp package() do
+    [
+       name: "cimg_ex",
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/shoz-f/cimg_ex.git"}
     ]
   end
 end

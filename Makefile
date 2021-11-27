@@ -13,8 +13,8 @@ HOSTOS = $(shell uname -s)
 PREFIX = $(MIX_APP_PATH)/priv
 BUILD  = $(MIX_APP_PATH)/obj
 
-LIB_CIMG = src/3rd_party/CImg
-LIB_STB  = src/3rd_party/stb
+LIB_CIMG = deps/CImg
+LIB_STB  = deps/stb
 
 CFLAGS  ?= -O2 -Isrc -I$(LIB_CIMG) -I$(LIB_STB) -pedantic -fPIC
 LDFLAGS ?= -shared
