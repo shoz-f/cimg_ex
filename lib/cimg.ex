@@ -14,9 +14,16 @@ defmodule CImg do
   The image will be assigned to Erlang Resource by NIF, so the image will
   automatically be subject to garbage collection when it is no longer in use.
   
-  This is a very important point. Some of the functions in this module
-  mmutably rewrite the original image. I recommend you to make a duplicate of
-  the image before performing the image processing. 
+  This is most important point. Some of the functions in this module mutably
+  rewrite the original image, when they recieve the image as %Builder{}.
+  
+    ```Elixir
+    img = CImg.load("sample.jpg")   # create %CImg{}
+    CImg.builder(img)               # duplicate img and create %Builder{} with it
+    |> CImg.fill(0)                              # rewrite
+    |> CImg.draw_circle(100, 100, 30, {0,0,255}) # rewrite
+    |> CImg.display(disp)
+    ```
 
   ### Platform
   It has been confirmed to work in the following OS environment.
@@ -37,6 +44,7 @@ defmodule CImg do
   """
   alias __MODULE__
   alias CImg.NIF
+  alias CImg.Builder
 
   # image object
   #   :handle - Erlang resource object pointing to the CImg image.
@@ -50,32 +58,11 @@ defmodule CImg do
     end
   end
 
-  # import builder functions.
-  alias CImg.Builder
 
-  # builder object
-  #   :handle - work image.
-  #   :src    - source image.
-  #   :script - image operations
-  defmodule Builder do
-    defstruct handle: nil, src: nil, script: []
-  end
-  
-  def builder(%Builder{}=builder) do
-    builder
-  end
-  def builder(cimg) do
-    dup = CImg.dup(cimg)
-    %Builder{handle: dup.handle}
-  end
-  def builder(x, y, z, c, val) do
-    img = create(x, y, z, c, val)
-    %Builder{handle: img.handle}
-  end
-  
-  def runit(%Builder{handle: h}) do
-    %CImg{handle: h}
-  end
+  # Functions to build image processing sequence.
+  defdelegate builder(img), to: Builder
+  defdelegate builder(x, y, z, c, val), to: Builder
+  defdelegate runit(builder), to: Builder
 
 
   @doc """
@@ -96,6 +83,7 @@ defmodule CImg do
     with {:ok, h} <- NIF.cimg_create(x, y, z, c, val),
       do: %CImg{handle: h}
   end
+
 
   @doc """
   Create image{x,y,z,c} from raw binary.
@@ -121,6 +109,7 @@ defmodule CImg do
       do: %CImg{handle: h}
   end
 
+
   @doc """
   Load a image from file. 
 
@@ -138,6 +127,7 @@ defmodule CImg do
     with {:ok, h} <- NIF.cimg_load(fname),
       do: %CImg{handle: h}
   end
+
 
   @doc """
   Load a image from memory.
@@ -158,6 +148,25 @@ defmodule CImg do
     with {:ok, h} <- NIF.cimg_load_from_memory(bin),
       do: %CImg{handle: h}
   end
+
+
+  @doc """
+  Save the image to the file.
+
+  ## Parameters
+
+    * cimg - image object to save.
+    * fname - file path for the image. (only jpeg images - xxx.jpg - are available now)
+
+  ## Examples
+  
+    ```Elixir
+    iex> CImg.save(img, "sample.jpg")
+    ```
+  """
+  defdelegate save(cimg, fname),
+    to: NIF, as: :cimg_save
+
   
   @doc """
   Duplicate the image.
@@ -178,118 +187,6 @@ defmodule CImg do
       do: %CImg{handle: h}
   end
 
-  @doc """
-  Save the image to the file.
-
-  ## Parameters
-
-    * cimg - image object %CImg{} to save.
-    * fname - file path for the image. (only jpeg images - xxx.jpg - are available now)
-
-  ## Examples
-  
-    ```Elixir
-    iex> CImg.save(img, "sample.jpg")
-    ```
-  """
-  defdelegate save(cimg, fname),
-    to: NIF, as: :cimg_save
-
-  @doc """
-  Get a new image object resized {x, y}.
-  
-  ## Parameters
-  
-    * cimg - image object %CImg{} to save.
-    * {x, y} - resize width and height
-    * align - alignment mode
-      - :none - fit resizing
-      - :ul - fixed aspect resizing, upper-leftt alignment.
-      - :br - fixed aspect resizing, bottom-right alignment.
-    * fill - filling value for the margins, when fixed aspect resizing.
-
-  ## Examples
-  
-    ```Elixir
-    iex> img = CImg.load("sample.jpg")
-    iex> res = CImg.get_resize(img, {300,300}, :ul)
-    ```
-  """
-  def get_resize(cimg, {x, y}, align \\ :none, fill \\ 0) do
-    align = case align do
-      :none -> 0
-      :ul   -> 1
-      :br   -> 2
-      _     -> raise(ArgumentError, "unknown align '#{align}'.")
-    end
-
-    with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill),
-      do: %CImg{handle: packed}
-  end
-
-
-  @doc """
-  """
-  def blur(img, sigma, boundary_conditions \\ true, is_gaussian \\ true)
-  def blur(%Builder{}=builder, sigma, boundary_conditions, is_gaussian) do
-    NIF.cimg_blur(builder, sigma, boundary_conditions, is_gaussian)
-  end
-  def blur(cimg, sigma, boundary_conditions, is_gaussian) do
-    dup = CImg.dup(cimg)
-    NIF.cimg_blur(dup, sigma, boundary_conditions, is_gaussian)
-  end
-
-
-  @doc """
-  mirroring the image on `axis`
-  
-  ## Parameters
-  
-    * cimg - image object %CImg{} to save.
-    * axis - flipping axis: :x, :y
-  
-  ## Examples
-  
-    ```Elixir
-    iex> mirror = CImg.mirror(img, :y)
-    # vertical flipping
-    ```
-  """
-  def mirror(%Builder{}=builder, axis) when axis in [:x, :y] do
-    NIF.cimg_mirror(builder, axis)
-  end
-  def mirror(cimg, axis) when axis in [:x, :y] do
-    dup = CImg.dup(cimg)
-    NIF.cimg_mirror(dup, axis)
-  end
-
-  @doc """
-  Get the gray image of the image.
-  
-  ## Parameters
-
-    * cimg - image object %CImg{} to save.
-    * opt_pn - intensity inversion: 0 (default) - no-inversion, 1 - inversion
-  
-  ## Examples
-  
-    ```Elixir
-    iex> gray = CImg.get_gray(img, 1)
-    # get inverted gray image
-    ```
-  """
-  def get_gray(cimg, opt_pn \\ 0) do
-    with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn),
-      do: %CImg{handle: gray}
-  end
-
-
-  @doc """
-  """
-  def get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions \\ 0) do
-    with {:ok, crop} <- NIF.cimg_get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions),
-      do: %CImg{handle: crop}
-  end
 
   @doc """
   Get serialized binary of the image from top-left to bottom-right.
@@ -328,66 +225,139 @@ defmodule CImg do
     end
   end
 
+
   @doc """
+  """
+  def from_npy(%{descr: dtype, shape: {x, y, z, c}, data: bin}) do
+    create_from_bin(bin, x, y, z, c, dtype)
+  end
+
+
+  @doc """
+  """
+  def to_npy(cimg) do
+    with {:ok, bin} <- NIF.cimg_to_bin(cimg, "<u1", 0.0, 1.0, false, false) do
+      %{
+        descr: "<u1",
+        fortran_order: false,
+        shape: shape(cimg),
+        data: bin
+      }
+    end
+  end
+  
+  
+  @doc """
+  Get a new image object resized {x, y}.
+  
+  ## Parameters
+  
+    * cimg - image object.
+    * {x, y} - resize width and height
+    * align - alignment mode
+      - :none - fit resizing
+      - :ul - fixed aspect resizing, upper-leftt alignment.
+      - :br - fixed aspect resizing, bottom-right alignment.
+    * fill - filling value for the margins, when fixed aspect resizing.
+
+  ## Examples
+  
+    ```Elixir
+    iex> img = CImg.load("sample.jpg")
+    iex> res = CImg.get_resize(img, {300,300}, :ul)
+    ```
+  """
+  def get_resize(cimg, {x, y}, align \\ :none, fill \\ 0) do
+    align = case align do
+      :none -> 0
+      :ul   -> 1
+      :br   -> 2
+      _     -> raise(ArgumentError, "unknown align '#{align}'.")
+    end
+
+    with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill),
+      do: %CImg{handle: packed}
+  end
+
+
+  @doc """
+  """
+  def blur(img, sigma, boundary_conditions \\ true, is_gaussian \\ true)
+  def blur(%Builder{}=builder, sigma, boundary_conditions, is_gaussian) do
+    # mutable operation.
+    NIF.cimg_blur(builder, sigma, boundary_conditions, is_gaussian)
+  end
+  def blur(cimg, sigma, boundary_conditions, is_gaussian) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_blur(dup, sigma, boundary_conditions, is_gaussian)
+  end
+
+
+  @doc """
+  mirroring the image on `axis`
+  
+  ## Parameters
+  
+    * cimg - %CImg{} or %Builder{} object.
+    * axis - flipping axis: :x, :y
+  
+  ## Examples
+  
+    ```Elixir
+    iex> mirror = CImg.mirror(img, :y)
+    # vertical flipping
+    ```
+  """
+  def mirror(%Builder{}=builder, axis) when axis in [:x, :y] do
+    # mutable operation
+    NIF.cimg_mirror(builder, axis)
+  end
+  def mirror(cimg, axis) when axis in [:x, :y] do
+    dup = CImg.dup(cimg)
+    NIF.cimg_mirror(dup, axis)
+  end
+
+
+  @doc """
+  Get the gray image of the image.
+  
+  ## Parameters
+
+    * cimg - image object %CImg{} to save.
+    * opt_pn - intensity inversion: 0 (default) - no-inversion, 1 - inversion
+  
+  ## Examples
+  
+    ```Elixir
+    iex> gray = CImg.get_gray(img, 1)
+    # get inverted gray image
+    ```
+  """
+  def get_gray(cimg, opt_pn \\ 0) do
+    with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn),
+      do: %CImg{handle: gray}
+  end
+
+
+  @doc """
+  ## Parameters
+
+    * cimg - image object %CImg{} to save.
+  """
+  def get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions \\ 0) do
+    with {:ok, crop} <- NIF.cimg_get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions),
+      do: %CImg{handle: crop}
+  end
+
+
+  @doc """
+  ## Parameters
+
+    * cimg - image object %CImg{} to save.
   """
   def map(cimg, lut, boundary \\ 0) do
     with {:ok, h} <- NIF.cimg_map(cimg, lut, boundary),
       do: %CImg{handle: h}
-  end
-
-  @doc """
-  [mut] Draw rectangle in the image.
-  
-  ## Parameters
-  
-    * builder - builder object.
-    * x0,y0,x1,y1 - diagonal coordinates. if all of them are integer, they mean
-    actual coodinates. if all of them are float within 0.0-1.0, they mean ratio
-    of the image. 
-    * color - boundary color
-    * opacity - opacity: 0.0-1.0
-    * pattern - boundary line pattern: 32bit pattern
-
-  ## Examples
-  
-    ```Elixir
-    iex> CImg.draw_rect(img, 50, 30, 100, 80, {255, 0, 0}, 0.3, 0xFF00FF00)
-    
-    iex> CImg.draw_rect(img, 0.2, 0.3, 0.6, 0.8, {0, 255, 0})
-    ```
-  """
-  def draw_rect(%Builder{}=builder, x0, y0, x1, y1, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
-    cond do
-      Enum.all?([x0, y0, x1, y1], &is_integer/1) ->
-        NIF.cimg_draw_rect(builder, x0, y0, x1, y1, color, opacity, pattern)
-      Enum.all?([x0, y0, x1, y1], fn x -> 0.0 <= x and x <= 1.0 end) ->
-        NIF.cimg_draw_ratio_rect(builder, x0, y0, x1, y1, color, opacity, pattern)
-    end
-  end
-
-  @doc """
-  [mut] Filling the image with `val`.
-  
-  ## Parameters
-  
-    * builder - builder object.
-    * val - filling value.
-  
-  ## Examples
-  
-    ```Elixir
-    iex> res = CImg.fill(img, 0x7f)
-    ```
-  """
-  def fill(%Builder{}=builder, val) do
-    NIF.cimg_fill(builder, val)
-  end
-
-  @doc """
-  [mut]
-  """
-  def draw_graph(%Builder{}=cimg, data, color, opacity \\ 1.0, plot_type \\ 1, vertex_type \\ 1, ymin \\ 0.0, ymax \\ 0.0, pattern \\ 0xFFFFFFFF) do
-    NIF.cimg_draw_graph(cimg, data, color, opacity, plot_type, vertex_type, ymin, ymax, pattern)
   end
 
 
@@ -431,6 +401,146 @@ defmodule CImg do
 
 
   @doc """
+  Get shape {x,y,z,c} of the image
+  
+  ## Parameters
+  
+    * cimg - image object.
+  
+  ## Examples
+  
+    ```Elixir
+    iex> shape = CImg.shape(imge)
+    ```
+  """
+  defdelegate shape(cimg),
+    to: NIF, as: :cimg_shape
+
+
+  @doc """
+  Get byte size of the image
+  
+  ## Parameters
+  
+    * builder - builder object.
+  
+  ## Examples
+  
+    ```Elixir
+    iex> size = CImg.sizh(imge)
+    ```
+  """
+  defdelegate size(cimg),
+    to: NIF, as: :cimg_size
+
+
+  @doc """
+  [mut] Thresholding the image.
+  
+  ## Parameters
+  
+    * img - %CImg{} or %Builder{} object.
+    * val - threshold value
+    * soft - 
+    * strict -
+  
+  ## Examples
+  
+    ```Elixir
+    iex> res = CImg.threshold(imge, 100)
+    ```
+  """
+  def threshold(img, val, soft \\ false, strict \\ false)
+  def threshold(%Builder{}=builder, val, soft, strict) do
+    # mutable operation.
+    NIF.cimg_threshold(builder, val, soft, strict)
+  end
+  def threshold(cimg, val, soft, strict) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_threshold(dup, val, soft, strict)
+  end
+
+
+  @doc """
+  ## Parameters
+
+    * cimg - image object %CImg{} to save.
+  """
+  def transfer(img, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0)
+  def transfer(%Builder{}=builder, cimg_src, mapping, cx, cy, cz) do
+    # mutable operation.
+    NIF.cimg_transfer(builder, cimg_src, mapping, cx, cy, cz)
+  end
+  def transfer(cimg, cimg_src, mapping, cx, cy, cz) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_transfer(dup, cimg_src, mapping, cx, cy, cz)
+  end
+
+
+  @doc """
+  [mut] Filling the image with `val`.
+  
+  ## Parameters
+  
+    * builder - builder object.
+    * val - filling value.
+  
+  ## Examples
+  
+    ```Elixir
+    iex> res = CImg.fill(img, 0x7f)
+    ```
+  """
+  def fill(%Builder{}=builder, val) do
+    NIF.cimg_fill(builder, val)
+  end
+
+  @doc """
+  [mut] Draw graph.
+  
+  ## Parameters
+
+    * cimg - image object %CImg{} to save.
+  """
+  def draw_graph(%Builder{}=cimg, data, color, opacity \\ 1.0, plot_type \\ 1, vertex_type \\ 1, ymin \\ 0.0, ymax \\ 0.0, pattern \\ 0xFFFFFFFF) do
+    # mutable operation.
+    NIF.cimg_draw_graph(cimg, data, color, opacity, plot_type, vertex_type, ymin, ymax, pattern)
+  end
+
+
+  @doc """
+  [mut] Draw rectangle in the image.
+  
+  ## Parameters
+  
+    * builder - builder object.
+    * x0,y0,x1,y1 - diagonal coordinates. if all of them are integer, they mean
+    actual coodinates. if all of them are float within 0.0-1.0, they mean ratio
+    of the image. 
+    * color - boundary color
+    * opacity - opacity: 0.0-1.0
+    * pattern - boundary line pattern: 32bit pattern
+
+  ## Examples
+  
+    ```Elixir
+    iex> CImg.draw_rect(img, 50, 30, 100, 80, {255, 0, 0}, 0.3, 0xFF00FF00)
+    
+    iex> CImg.draw_rect(img, 0.2, 0.3, 0.6, 0.8, {0, 255, 0})
+    ```
+  """
+  def draw_rect(%Builder{}=builder, x0, y0, x1, y1, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
+    # mutable operation.
+    cond do
+      Enum.all?([x0, y0, x1, y1], &is_integer/1) ->
+        NIF.cimg_draw_rect(builder, x0, y0, x1, y1, color, opacity, pattern)
+      Enum.all?([x0, y0, x1, y1], fn x -> 0.0 <= x and x <= 1.0 end) ->
+        NIF.cimg_draw_ratio_rect(builder, x0, y0, x1, y1, color, opacity, pattern)
+    end
+  end
+
+
+  @doc """
   [mut] Draw filled circle in the image.
   
   ## Parameters
@@ -448,6 +558,7 @@ defmodule CImg do
     ```
   """
   def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0) do
+    # mutable operation.
     NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity)
   end
 
@@ -471,78 +582,8 @@ defmodule CImg do
     ```
   """
   def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity, pattern) do
+    # mutable operation.
   	NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity, pattern)
-  end
-
-
-  @doc """
-  Get shape {x,y,z,c} of the image
-  
-  ## Parameters
-  
-    * cimg - image object.
-  
-  ## Examples
-  
-    ```Elixir
-    iex> shape = CImg.shape(imge)
-    ```
-  """
-  defdelegate shape(cimg),
-    to: NIF, as: :cimg_shape
-
-  @doc """
-  Get byte size of the image
-  
-  ## Parameters
-  
-    * builder - builder object.
-  
-  ## Examples
-  
-    ```Elixir
-    iex> size = CImg.sizh(imge)
-    ```
-  """
-  defdelegate size(cimg),
-    to: NIF, as: :cimg_size
-
-
-  @doc """
-  """
-  def transfer(img, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0)
-  def transfer(%Builder{}=builder, cimg_src, mapping, cx, cy, cz) do
-    NIF.cimg_transfer(builder, cimg_src, mapping, cx, cy, cz)
-  end
-  def transfer(cimg, cimg_src, mapping, cx, cy, cz) do
-    dup = CImg.dup(cimg)
-    NIF.cimg_transfer(dup, cimg_src, mapping, cx, cy, cz)
-  end
-
-
-  @doc """
-  [mut] Thresholding the image.
-  
-  ## Parameters
-  
-    * builder - builder object.
-    * val - threshold value
-    * soft - 
-    * strict -
-  
-  ## Examples
-  
-    ```Elixir
-    iex> res = CImg.threshold(imge, 100)
-    ```
-  """
-  def threshold(img, val, soft \\ false, strict \\ false)
-  def threshold(%Builder{}=builder, val, soft, strict) do
-    NIF.cimg_threshold(builder, val, soft, strict)
-  end
-  def threshold(cimg, val, soft, strict) do
-    dup = CImg.dup(cimg)
-    NIF.cimg_threshold(dup, val, soft, strict)
   end
 
 
