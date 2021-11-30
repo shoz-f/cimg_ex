@@ -14,7 +14,7 @@ The image will be assigned to Erlang Resource by NIF, so the image will
 automatically be subject to garbage collection when it is no longer in use.
 
 This is a very important point. Some of the functions in CImg module
-immutably rewrite the original image. I recommend you to make a duplicate of
+mmutably rewrite the original image. I recommend you to make a duplicate of
 the image before performing the image processing. 
 
 ## Platform
