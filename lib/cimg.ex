@@ -227,6 +227,18 @@ defmodule CImg do
 
 
   @doc """
+  Create the image from %Npy{} format data.
+  
+  ## Parameters
+  
+    * npy - %Npy{} has 4 rank.
+  
+  ## Examples
+  
+    ```Elixir
+    {:ok, npy} = Npy.load("image.npy")
+    img = CImg.from_npy(npy)
+    ```
   """
   def from_npy(%{descr: dtype, shape: {x, y, z, c}, data: bin}) do
     create_from_bin(bin, x, y, z, c, dtype)
@@ -234,6 +246,18 @@ defmodule CImg do
 
 
   @doc """
+  Convert the image to %Npy{} format data.
+  
+  ## Parameters
+  
+    * cimg - image object.
+  
+  ## Examples
+  
+    ```Elixir
+    npy = CImg.load("sample.jpg")
+      |> CImg.to_npy()
+    ```
   """
   def to_npy(cimg) do
     with {:ok, bin} <- NIF.cimg_to_bin(cimg, "<u1", 0.0, 1.0, false, false) do
@@ -281,6 +305,21 @@ defmodule CImg do
 
 
   @doc """
+  Bluring image.
+  
+  ## Parameters
+  
+    * img - %CImg{} or %Builder{} object
+    * sigma - 
+    * boundary_conditions - 
+    * is_gaussian -
+  
+  ## Examples
+  
+    ```Elixir
+    img = CImg.load("sample.jpg")
+    blured = CImg.blur(img, 0.3)
+    ```
   """
   def blur(img, sigma, boundary_conditions \\ true, is_gaussian \\ true)
   def blur(%Builder{}=builder, sigma, boundary_conditions, is_gaussian) do
@@ -351,15 +390,18 @@ defmodule CImg do
 
 
   @doc """
+  Create color mapped image by lut.
+
   ## Parameters
 
     * cimg - image object %CImg{} to save.
+    * lut - color mapping lut name - {"default", "lines", "hot", "cool", "jet"}
+    * boundary - 
   """
-  def map(cimg, lut, boundary \\ 0) do
+  def map(cimg, lut \\ "default", boundary \\ 0) do
     with {:ok, h} <- NIF.cimg_map(cimg, lut, boundary),
       do: %CImg{handle: h}
   end
-
 
   @doc """
   [mut] Set the pixel value at (x, y).
@@ -462,9 +504,25 @@ defmodule CImg do
 
 
   @doc """
+  Pick the pixels on the source image and write on the distination image
+  according to the mapping table.
+  
   ## Parameters
 
-    * cimg - image object %CImg{} to save.
+    * cimg - distination image object.
+    * cimg_src - source image.
+    * mapping - mapping table. ex) [{[10,10],[10,20]}], move pixel at [10,10] to [10,20]
+    * cx, cy, cz - location of upper-left mapping table on both images.
+  
+  ## Examples
+  
+    ```Elixir
+    map = [{[20,20],[25,25]}, {[20,21],[25,26]}]
+    src = CImg.load("sample.jpg")
+    dst = CImg.builder(src)
+      |> CImg.transfer(src, map)
+      |> CImg.runit()
+    ```
   """
   def transfer(img, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0)
   def transfer(%Builder{}=builder, cimg_src, mapping, cx, cy, cz) do
