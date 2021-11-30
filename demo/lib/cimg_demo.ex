@@ -1,4 +1,6 @@
 defmodule CImgDemo do
+  alias CImg.Builder
+
   def demo1(), do: bounce_lens(1)
   def demo2(), do: bounce_lens(2)
   def demo3(), do: profile()
@@ -17,16 +19,17 @@ defmodule CImgDemo do
     loop_bounce(0.0, disp, screen, image, fisheye)
   end
 
-  def loop_bounce(alpha, disp, res, img, fisheye) do
+  def loop_bounce(alpha, disp, screen, img, fisheye) do
     case CImgDisplay.is_closed(disp) do
       true  -> :ok
       false ->
         {w,h,_,_} = CImg.shape(img)
-        CImg.assign(res, img)
+
+        CImg.builder(img)
         |> fisheye.(img, lissajous(alpha, w, h))
         |> CImg.display(disp)
 
-        loop_bounce(alpha+0.02, disp, res, img, fisheye)
+        loop_bounce(alpha+0.02, disp, screen, img, fisheye)
     end
   end
 
@@ -39,15 +42,15 @@ defmodule CImgDemo do
     ] |> Enum.map(&trunc/1)
   end
 
-  def fisheye(res, img, [xc, yc, r]) do
-    res
+  def fisheye(%Builder{}=screen, img, [xc, yc, r]) do
+    screen
     |> CImg.transfer(img, fishlens(r), xc, yc)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 0.3)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 1.0, 0xFFFFFFFF)
   end
 
-  def fisheye(res, img, [xc, yc, r], lens) do
-    res
+  def fisheye(%Builder{}=screen, img, [xc, yc, r], lens) do
+    screen
     |> CImg.transfer(img, lens, xc, yc)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 0.3)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 1.0, 0xFFFFFFFF)
@@ -66,17 +69,17 @@ defmodule CImgDemo do
     blue  = {0, 0, 255}
 
     image  = CImg.load("lena.jpg") |> CImg.blur(2.5)
-    canvas = CImg.create(500, 400, 1, 3, 0)
+    screen = CImg.builder(500, 400, 1, 3, 0)
     
     main_disp = CImgDisplay.create(image, "Click a point")
-    draw_disp = CImgDisplay.create(canvas, "Intensity profile")
+    draw_disp = CImgDisplay.create(screen, "Intensity profile")
 
     {width,_,_,_} = CImg.shape(image)
 
     CImgDisplay.wait(main_disp)
 
     loop_profile(main_disp, fn y ->
-      canvas
+      screen
         |> CImg.fill(0)
         |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 0, width-1, y, 0, 0), red,   1, 1, 0, 255, 0)
         |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 1, width-1, y, 0, 1), green, 1.0, 1, 0, 255.0, 0.0)

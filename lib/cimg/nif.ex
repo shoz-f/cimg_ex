@@ -51,8 +51,6 @@ defmodule CImg.NIF do
     do: raise("NIF cimg_set/6 not implemented")
   def cimg_get(_c, _x, _y, _z, _s),
     do: raise("NIF cimg_get/5 not implemented")
-  def cimg_assign(_c, _c_src),
-    do: raise("NIF cimg_assign/2 not implemented")
   def cimg_draw_circle(_c, _x0, _y0, _radius, _color, _opacity, _pattern),
     do: raise("NIF cimg_draw_circle/7 not implemented")
   def cimg_draw_circle(_c, _x0, _y0, _radius, _color, _opacity),

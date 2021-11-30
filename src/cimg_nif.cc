@@ -165,7 +165,7 @@ static ErlNifFunc nif_funcs[] = {
 
     {"cimg_set",              6, NifCImgU8::set,                     0},
     {"cimg_get",              5, NifCImgU8::get,                     0},
-    {"cimg_assign",           2, NifCImgU8::assign,                  0},
+//    {"cimg_assign",           2, NifCImgU8::assign,                  0},
     {"cimg_fill",             2, NifCImgU8::fill,                    0},
     {"cimg_clear",            1, NifCImgU8::clear,                   0},
     {"cimg_shape",            1, NifCImgU8::shape,                   0},

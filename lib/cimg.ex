@@ -15,7 +15,7 @@ defmodule CImg do
   automatically be subject to garbage collection when it is no longer in use.
   
   This is a very important point. Some of the functions in this module
-  immutably rewrite the original image. I recommend you to make a duplicate of
+  mmutably rewrite the original image. I recommend you to make a duplicate of
   the image before performing the image processing. 
 
   ### Platform
@@ -51,7 +51,32 @@ defmodule CImg do
   end
 
   # import builder functions.
-  import CImg.Builder
+  alias CImg.Builder
+
+  # builder object
+  #   :handle - work image.
+  #   :src    - source image.
+  #   :script - image operations
+  defmodule Builder do
+    defstruct handle: nil, src: nil, script: []
+  end
+  
+  def builder(%Builder{}=builder) do
+    builder
+  end
+  def builder(cimg) do
+    dup = CImg.dup(cimg)
+    %Builder{handle: dup.handle}
+  end
+  def builder(x, y, z, c, val) do
+    img = create(x, y, z, c, val)
+    %Builder{handle: img.handle}
+  end
+  
+  def runit(%Builder{handle: h}) do
+    %CImg{handle: h}
+  end
+
 
   @doc """
   Create image{x,y,z,c} filled `val`.
@@ -202,11 +227,21 @@ defmodule CImg do
       do: %CImg{handle: packed}
   end
 
-  defdelegate blur(cimg, sigma, boundary_conditions \\ true, is_gaussian \\ true),
-    to: NIF, as: :cimg_blur
 
   @doc """
-  [mut] mirroring the image on `axis`
+  """
+  def blur(img, sigma, boundary_conditions \\ true, is_gaussian \\ true)
+  def blur(%Builder{}=builder, sigma, boundary_conditions, is_gaussian) do
+    NIF.cimg_blur(builder, sigma, boundary_conditions, is_gaussian)
+  end
+  def blur(cimg, sigma, boundary_conditions, is_gaussian) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_blur(dup, sigma, boundary_conditions, is_gaussian)
+  end
+
+
+  @doc """
+  mirroring the image on `axis`
   
   ## Parameters
   
@@ -220,8 +255,12 @@ defmodule CImg do
     # vertical flipping
     ```
   """
+  def mirror(%Builder{}=builder, axis) when axis in [:x, :y] do
+    NIF.cimg_mirror(builder, axis)
+  end
   def mirror(cimg, axis) when axis in [:x, :y] do
-    NIF.cimg_mirror(cimg, axis)
+    dup = CImg.dup(cimg)
+    NIF.cimg_mirror(dup, axis)
   end
 
   @doc """
@@ -244,6 +283,9 @@ defmodule CImg do
       do: %CImg{handle: gray}
   end
 
+
+  @doc """
+  """
   def get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions \\ 0) do
     with {:ok, crop} <- NIF.cimg_get_crop(cimg, x0, y0, z0, c0, x1, y1, z1, c1, boundary_conditions),
       do: %CImg{handle: crop}
@@ -286,6 +328,8 @@ defmodule CImg do
     end
   end
 
+  @doc """
+  """
   def map(cimg, lut, boundary \\ 0) do
     with {:ok, h} <- NIF.cimg_map(cimg, lut, boundary),
       do: %CImg{handle: h}
@@ -296,7 +340,7 @@ defmodule CImg do
   
   ## Parameters
   
-    * cimg - image object.
+    * builder - builder object.
     * x0,y0,x1,y1 - diagonal coordinates. if all of them are integer, they mean
     actual coodinates. if all of them are float within 0.0-1.0, they mean ratio
     of the image. 
@@ -312,12 +356,12 @@ defmodule CImg do
     iex> CImg.draw_rect(img, 0.2, 0.3, 0.6, 0.8, {0, 255, 0})
     ```
   """
-  def draw_rect(cimg, x0, y0, x1, y1, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
+  def draw_rect(%Builder{}=builder, x0, y0, x1, y1, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
     cond do
       Enum.all?([x0, y0, x1, y1], &is_integer/1) ->
-        NIF.cimg_draw_rect(cimg, x0, y0, x1, y1, color, opacity, pattern)
+        NIF.cimg_draw_rect(builder, x0, y0, x1, y1, color, opacity, pattern)
       Enum.all?([x0, y0, x1, y1], fn x -> 0.0 <= x and x <= 1.0 end) ->
-        NIF.cimg_draw_ratio_rect(cimg, x0, y0, x1, y1, color, opacity, pattern)
+        NIF.cimg_draw_ratio_rect(builder, x0, y0, x1, y1, color, opacity, pattern)
     end
   end
 
@@ -326,7 +370,7 @@ defmodule CImg do
   
   ## Parameters
   
-    * cimg - image object.
+    * builder - builder object.
     * val - filling value.
   
   ## Examples
@@ -335,10 +379,17 @@ defmodule CImg do
     iex> res = CImg.fill(img, 0x7f)
     ```
   """
-  defdelegate fill(cimg, val),
-    to: NIF, as: :cimg_fill
-  defdelegate draw_graph(cimg, data, color, opacity \\ 1.0, plot_type \\ 1, vertex_type \\ 1, ymin \\ 0.0, ymax \\ 0.0, pattern \\ 0xFFFFFFFF),
-    to: NIF, as: :cimg_draw_graph
+  def fill(%Builder{}=builder, val) do
+    NIF.cimg_fill(builder, val)
+  end
+
+  @doc """
+  [mut]
+  """
+  def draw_graph(%Builder{}=cimg, data, color, opacity \\ 1.0, plot_type \\ 1, vertex_type \\ 1, ymin \\ 0.0, ymax \\ 0.0, pattern \\ 0xFFFFFFFF) do
+    NIF.cimg_draw_graph(cimg, data, color, opacity, plot_type, vertex_type, ymin, ymax, pattern)
+  end
+
 
   @doc """
   [mut] Set the pixel value at (x, y).
@@ -355,8 +406,11 @@ defmodule CImg do
     iex> res = CImg.set(0x7f, 120, 40)
     ```
   """
-  defdelegate set(val, cimg, x, y \\ 0, z \\ 0, c \\ 0),
-    to: NIF, as: :cimg_set
+  def set(val, cimg, x, y \\ 0, z \\ 0, c \\ 0) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_set(val, dup, x, y, z, c)
+  end
+
 
   @doc """
   Get the pixel value at (x, y).
@@ -375,29 +429,13 @@ defmodule CImg do
   defdelegate get(cimg, x, y \\ 0, z \\ 0, c \\ 0),
     to: NIF, as: :cimg_get
 
-  @doc """
-  [mut] Assign `cimg_src` to `cimg`.
-  
-  ## Parameters
-  
-    * cimg - image object.
-    * cimg_src - source image to assign
-  
-  ## Examples
-  
-    ```Elixir
-    iex> res = CImg.assign(imge, image_src)
-    ```
-  """
-  defdelegate assign(cimg, cimg_src),
-    to: NIF, as: :cimg_assign
 
   @doc """
   [mut] Draw filled circle in the image.
   
   ## Parameters
   
-    * cimg - image object.
+    * builder - builder object.
     * x0,y0 - circle center location
     * radius - circle radius
     * color - filling color
@@ -409,15 +447,17 @@ defmodule CImg do
     iex> res = CImg.draw_circle(imge, 100, 80, 40, {0, 0, 255})
     ```
   """
-  defdelegate draw_circle(cimg, x0, y0, radius, color, opacity \\ 1.0),
-    to: NIF, as: :cimg_draw_circle
+  def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0) do
+    NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity)
+  end
+
 
   @doc """
   [mut] Draw circle in the image.
   
   ## Parameters
   
-    * cimg - image object.
+    * builder - builder object.
     * x0,y0 - circle center location
     * radius - circle radius
     * color - boundary color
@@ -430,8 +470,10 @@ defmodule CImg do
     iex> res = CImg.draw_circle(imge, 100, 80, 40, {0, 0, 255}, 0.3, 0xFFFFFFFF)
     ```
   """
-  defdelegate draw_circle(cimg, x0, y0, radius, color, opacity, pattern),
-    to: NIF, as: :cimg_draw_circle
+  def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity, pattern) do
+  	NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity, pattern)
+  end
+
 
   @doc """
   Get shape {x,y,z,c} of the image
@@ -454,7 +496,7 @@ defmodule CImg do
   
   ## Parameters
   
-    * cimg - image object.
+    * builder - builder object.
   
   ## Examples
   
@@ -465,15 +507,25 @@ defmodule CImg do
   defdelegate size(cimg),
     to: NIF, as: :cimg_size
 
-  defdelegate transfer(cimg, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0),
-    to: NIF, as: :cimg_transfer
+
+  @doc """
+  """
+  def transfer(img, cimg_src, mapping, cx \\ 0, cy \\ 0, cz \\ 0)
+  def transfer(%Builder{}=builder, cimg_src, mapping, cx, cy, cz) do
+    NIF.cimg_transfer(builder, cimg_src, mapping, cx, cy, cz)
+  end
+  def transfer(cimg, cimg_src, mapping, cx, cy, cz) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_transfer(dup, cimg_src, mapping, cx, cy, cz)
+  end
+
 
   @doc """
   [mut] Thresholding the image.
   
   ## Parameters
   
-    * cimg - image object.
+    * builder - builder object.
     * val - threshold value
     * soft - 
     * strict -
@@ -484,8 +536,15 @@ defmodule CImg do
     iex> res = CImg.threshold(imge, 100)
     ```
   """
-  defdelegate threshold(cimg, val, soft \\ false, strict \\ false),
-    to: NIF, as: :cimg_threshold
+  def threshold(img, val, soft \\ false, strict \\ false)
+  def threshold(%Builder{}=builder, val, soft, strict) do
+    NIF.cimg_threshold(builder, val, soft, strict)
+  end
+  def threshold(cimg, val, soft, strict) do
+    dup = CImg.dup(cimg)
+    NIF.cimg_threshold(dup, val, soft, strict)
+  end
+
 
   @doc """
   Display the image on the CImgDisplay object.

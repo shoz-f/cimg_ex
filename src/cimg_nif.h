@@ -451,6 +451,31 @@ struct NifCImg {
         return argv[0];
     }
 
+    static MUT DECL_NIF(get_threshold) {
+        CImgT* img;
+        T     value;
+        bool  soft_threshold;
+        bool  strict_threshold;
+
+        if (argc != 4
+        ||  !enif_get_image(env, argv[0], &img)
+        ||  !enif_get_value(env, argv[1], &value)
+        ||  !enif_get_bool(env, argv[2], &soft_threshold)
+        ||  !enif_get_bool(env, argv[3], &strict_threshold)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* threshold;
+        try {
+            threshold = new CImgT(img->get_threshold(value, soft_threshold, strict_threshold));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, threshold);
+    }
+
     static DECL_NIF(get_gray) {
         CImgT* img;
         int opt_pn;
