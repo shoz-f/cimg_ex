@@ -2,7 +2,8 @@
 #include <string>
 
 /***** NIFs HELPER *****/
-#define DECL_NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+#define  DECL_NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int ality, const ERL_NIF_TERM term[])
+#define _DECL_NIF(name)  ERL_NIF_TERM name(ErlNifEnv* env, int ality, const ERL_NIF_TERM term[])
 #define MUT
 
 /***  Module Header  ******************************************************}}}*/

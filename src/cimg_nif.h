@@ -10,6 +10,17 @@
 **/
 /**************************************************************************{{{*/
 
+inline void RGB2BGR(int rgb[3], int bgr[3])
+{
+    bgr[0] = rgb[2];    // B
+    bgr[1] = rgb[1];    // G
+    bgr[2] = rgb[0];    // R
+}
+
+inline void RGB2YUV(int rgb[3], int yuv[3])
+{
+}
+
 template <class T>
 struct NifCImg {
 
@@ -44,12 +55,12 @@ struct NifCImg {
         unsigned int size_x, size_y, size_z, size_c;
         T value;
 
-        if (argc != 5
-        ||  !enif_get_uint(env, argv[0], &size_x)
-        ||  !enif_get_uint(env, argv[1], &size_y)
-        ||  !enif_get_uint(env, argv[2], &size_z)
-        ||  !enif_get_uint(env, argv[3], &size_c)
-        ||  !enif_get_value(env, argv[4], &value)) {
+        if (ality != 5
+        ||  !enif_get_uint(env, term[0], &size_x)
+        ||  !enif_get_uint(env, term[1], &size_y)
+        ||  !enif_get_uint(env, term[2], &size_z)
+        ||  !enif_get_uint(env, term[3], &size_c)
+        ||  !enif_get_value(env, term[4], &value)) {
             return enif_make_badarg(env);
         }
 
@@ -69,13 +80,13 @@ struct NifCImg {
         unsigned int size_x, size_y, size_z, size_c;
         ErlNifBinary bin;
 
-        if (argc != 6
-        ||  !enif_inspect_binary(env, argv[0], &bin)
-        ||  !enif_get_uint(env, argv[1], &size_x)
-        ||  !enif_get_uint(env, argv[2], &size_y)
-        ||  !enif_get_uint(env, argv[3], &size_z)
-        ||  !enif_get_uint(env, argv[4], &size_c)
-        ||  !enif_get_str(env, argv[5], &dtype)) {
+        if (ality != 6
+        ||  !enif_inspect_binary(env, term[0], &bin)
+        ||  !enif_get_uint(env, term[1], &size_x)
+        ||  !enif_get_uint(env, term[2], &size_y)
+        ||  !enif_get_uint(env, term[3], &size_z)
+        ||  !enif_get_uint(env, term[4], &size_c)
+        ||  !enif_get_str(env, term[5], &dtype)) {
             return enif_make_badarg(env);
         }
 
@@ -111,16 +122,16 @@ struct NifCImg {
     static DECL_NIF(create_list) {
         unsigned int size_x, size_y, size_z, size_c;
 
-        if (argc != 5
-        ||  !enif_get_uint(env, argv[0], &size_x)
-        ||  !enif_get_uint(env, argv[1], &size_y)
-        ||  !enif_get_uint(env, argv[2], &size_z)
-        ||  !enif_get_uint(env, argv[3], &size_c)
-        ||  !enif_is_list(env, argv[4])) {
+        if (ality != 5
+        ||  !enif_get_uint(env, term[0], &size_x)
+        ||  !enif_get_uint(env, term[1], &size_y)
+        ||  !enif_get_uint(env, term[2], &size_z)
+        ||  !enif_get_uint(env, term[3], &size_c)
+        ||  !enif_is_list(env, term[4])) {
             return enif_make_badarg(env);
         }
         
-        ERL_NIF_TERM list = argv[4];
+        ERL_NIF_TERM list = term[4];
         unsigned int len;
         if (!enif_get_list_length(env, list, &len)
         ||  len != size_x*size_y*size_z*size_c) {
@@ -151,8 +162,8 @@ struct NifCImg {
     static DECL_NIF(duplicate) {
         CImgT* src;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &src)) {
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &src)) {
             return enif_make_badarg(env);
         }
 
@@ -173,8 +184,8 @@ struct NifCImg {
     static DECL_NIF(load) {
         std::string fname;
 
-        if (argc != 1
-        ||  !enif_get_str(env, argv[0], &fname)) {
+        if (ality != 1
+        ||  !enif_get_str(env, term[0], &fname)) {
             return enif_make_badarg(env);
         }
 
@@ -193,9 +204,9 @@ struct NifCImg {
         CImgT* img;
         std::string fname;
 
-        if (argc != 2
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_str(env, argv[1], &fname)) {
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_str(env, term[1], &fname)) {
             return enif_make_badarg(env);
         }
 
@@ -206,8 +217,8 @@ struct NifCImg {
     
     static DECL_NIF(load_from_memory) {
         ErlNifBinary bin;
-        if (argc != 1
-        ||  !enif_inspect_binary(env, argv[0], &bin)) {
+        if (ality != 1
+        ||  !enif_inspect_binary(env, term[0], &bin)) {
             return enif_make_badarg(env);
         }
 
@@ -231,19 +242,19 @@ struct NifCImg {
         unsigned int x, y, z, c;
         T val;
 
-        if (argc != 6
-        ||  !enif_get_value(env, argv[0], &val)
-        ||  !enif_get_image(env, argv[1], &img)
-        ||  !enif_get_uint(env, argv[2], &x)
-        ||  !enif_get_uint(env, argv[3], &y)
-        ||  !enif_get_uint(env, argv[4], &z)
-        ||  !enif_get_uint(env, argv[5], &c)) {
+        if (ality != 6
+        ||  !enif_get_value(env, term[0], &val)
+        ||  !enif_get_image(env, term[1], &img)
+        ||  !enif_get_uint(env, term[2], &x)
+        ||  !enif_get_uint(env, term[3], &y)
+        ||  !enif_get_uint(env, term[4], &z)
+        ||  !enif_get_uint(env, term[5], &c)) {
             return enif_make_badarg(env);
         }
 
         (*img)(x, y, z, c) = val;
 
-        return argv[0];
+        return term[0];
     }
 
     static DECL_NIF(get) {
@@ -251,12 +262,12 @@ struct NifCImg {
         unsigned int x, y, z, c;
         T val;
 
-        if (argc != 5
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_uint(env, argv[1], &x)
-        ||  !enif_get_uint(env, argv[2], &y)
-        ||  !enif_get_uint(env, argv[3], &z)
-        ||  !enif_get_uint(env, argv[4], &c)) {
+        if (ality != 5
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_uint(env, term[1], &x)
+        ||  !enif_get_uint(env, term[2], &y)
+        ||  !enif_get_uint(env, term[3], &z)
+        ||  !enif_get_uint(env, term[4], &c)) {
             return enif_make_badarg(env);
         }
 
@@ -265,47 +276,47 @@ struct NifCImg {
         return enif_make_value(env, val);
     }
 
-    static DECL_NIF(assign) {
+    static _DECL_NIF(assign) {
         CImgT* dst;
         CImgT* src;
 
-        if (argc != 2
-        ||  !enif_get_image(env, argv[0], &dst)
-        ||  !enif_get_image(env, argv[1], &src)){
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &dst)
+        ||  !enif_get_image(env, term[1], &src)){
             return enif_make_badarg(env);
         }
 
         *dst = *src;
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(fill) {
         CImgT* img;
         T val;
 
-        if (argc != 2
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_value(env, argv[1], &val)) {
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_value(env, term[1], &val)) {
             return enif_make_badarg(env);
         }
 
         img->fill(val);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(clear) {
         CImgT* img;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &img)) {
             return enif_make_badarg(env);
         }
 
         img->clear();
         
-        return argv[0];
+        return term[0];
     }
 
     /**********************************************************************}}}*/
@@ -314,8 +325,8 @@ struct NifCImg {
     static DECL_NIF(shape) {
         CImgT* img;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &img)) {
             return enif_make_badarg(env);
         }
 
@@ -329,28 +340,28 @@ struct NifCImg {
     static DECL_NIF(size) {
         CImgT* img;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &img)) {
             return enif_make_badarg(env);
         }
 
         return enif_make_ulong(env, img->size());
     }
 
-    static MUT DECL_NIF(resize) {
+    static MUT _DECL_NIF(resize) {
         CImgT* img;
         int width, height;
 
-        if (argc != 3
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &width)
-        ||  !enif_get_int(env, argv[2], &height)) {
+        if (ality != 3
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &width)
+        ||  !enif_get_int(env, term[2], &height)) {
             return enif_make_badarg(env);
         }
 
         img->resize(width, height, -100, -100, 3);
 
-        return argv[0];
+        return term[0];
     }
 
     static DECL_NIF(get_resize) {
@@ -359,12 +370,12 @@ struct NifCImg {
         int align;
         int filling;
 
-        if (argc != 5
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &width)
-        ||  !enif_get_int(env, argv[2], &height)
-        ||  !enif_get_int(env, argv[3], &align)
-        ||  !enif_get_int(env, argv[4], &filling)) {
+        if (ality != 5
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &width)
+        ||  !enif_get_int(env, term[2], &height)
+        ||  !enif_get_int(env, term[3], &align)
+        ||  !enif_get_int(env, term[4], &filling)) {
             return enif_make_badarg(env);
         }
 
@@ -407,29 +418,29 @@ struct NifCImg {
         CImgT* img;
         char axis[2];
 
-        if (argc != 2
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_atom(env, argv[1], axis, 2, ERL_NIF_LATIN1)
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_atom(env, term[1], axis, 2, ERL_NIF_LATIN1)
         ||  (axis[0] != 'x' && axis[0] != 'y')) {
             return enif_make_badarg(env);
         }
 
         img->mirror(axis[0]);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(transpose) {
         CImgT* img;
 
-        if (argc != 1
-        ||  !enif_get_image(env, argv[0], &img)) {
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &img)) {
             return enif_make_badarg(env);
         }
 
         img->transpose();
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(threshold) {
@@ -438,17 +449,17 @@ struct NifCImg {
         bool  soft_threshold;
         bool  strict_threshold;
 
-        if (argc != 4
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_value(env, argv[1], &value)
-        ||  !enif_get_bool(env, argv[2], &soft_threshold)
-        ||  !enif_get_bool(env, argv[3], &strict_threshold)) {
+        if (ality != 4
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_value(env, term[1], &value)
+        ||  !enif_get_bool(env, term[2], &soft_threshold)
+        ||  !enif_get_bool(env, term[3], &strict_threshold)) {
             return enif_make_badarg(env);
         }
 
         img->threshold(value, soft_threshold, strict_threshold);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(get_threshold) {
@@ -457,11 +468,11 @@ struct NifCImg {
         bool  soft_threshold;
         bool  strict_threshold;
 
-        if (argc != 4
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_value(env, argv[1], &value)
-        ||  !enif_get_bool(env, argv[2], &soft_threshold)
-        ||  !enif_get_bool(env, argv[3], &strict_threshold)) {
+        if (ality != 4
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_value(env, term[1], &value)
+        ||  !enif_get_bool(env, term[2], &soft_threshold)
+        ||  !enif_get_bool(env, term[3], &strict_threshold)) {
             return enif_make_badarg(env);
         }
 
@@ -480,9 +491,9 @@ struct NifCImg {
         CImgT* img;
         int opt_pn;
 
-        if (argc != 2
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &opt_pn)) {
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &opt_pn)) {
             return enif_make_badarg(env);
         }
 
@@ -497,23 +508,42 @@ struct NifCImg {
         return enif_make_image(env, gray);
     }
 
+    static DECL_NIF(get_yuv) {
+        CImgT* img;
+
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* yuv;
+        try {
+            yuv = new CImgT(img->get_RGBtoYUV());
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, yuv);
+    }
+
     static MUT DECL_NIF(blur) {
         CImgT* img;
         double sigma;
         bool   boundary_conditions;
         bool   is_gaussian;
 
-        if (argc != 4
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_double(env, argv[1], &sigma)
-        ||  !enif_get_bool(env, argv[2], &boundary_conditions)
-        ||  !enif_get_bool(env, argv[3], &is_gaussian)) {
+        if (ality != 4
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_double(env, term[1], &sigma)
+        ||  !enif_get_bool(env, term[2], &boundary_conditions)
+        ||  !enif_get_bool(env, term[3], &is_gaussian)) {
             return enif_make_badarg(env);
         }
 
         img->blur(sigma, boundary_conditions, is_gaussian);
 
-        return argv[0];
+        return term[0];
     }
 
     static DECL_NIF(get_crop) {
@@ -522,17 +552,17 @@ struct NifCImg {
         int x1, y1, z1, c1;
         unsigned int boundary_conditions;
 
-        if (argc != 10
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &z0)
-        ||  !enif_get_int(env, argv[4], &c0)
-        ||  !enif_get_int(env, argv[5], &x1)
-        ||  !enif_get_int(env, argv[6], &y1)
-        ||  !enif_get_int(env, argv[7], &z1)
-        ||  !enif_get_int(env, argv[8], &c1)
-        ||  !enif_get_uint(env, argv[9], &boundary_conditions)) {
+        if (ality != 10
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &z0)
+        ||  !enif_get_int(env, term[4], &c0)
+        ||  !enif_get_int(env, term[5], &x1)
+        ||  !enif_get_int(env, term[6], &y1)
+        ||  !enif_get_int(env, term[7], &z1)
+        ||  !enif_get_int(env, term[8], &c1)
+        ||  !enif_get_uint(env, term[9], &boundary_conditions)) {
             return enif_make_badarg(env);
         }
 
@@ -561,22 +591,22 @@ struct NifCImg {
         double        ymax;
         unsigned int pattern;
 
-        if (argc != 9
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_image(env, argv[1], &data)
-        ||  !enif_get_color(env, argv[2], color)
-        ||  !enif_get_number(env, argv[3], &opacity)
-        ||  !enif_get_uint(env, argv[4], &plot_type)
-        ||  !enif_get_int(env, argv[5], &vertex_type)
-        ||  !enif_get_number(env, argv[6], &ymin)
-        ||  !enif_get_number(env, argv[7], &ymax)
-        ||  !enif_get_uint(env, argv[8], &pattern)) {
+        if (ality != 9
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_image(env, term[1], &data)
+        ||  !enif_get_color(env, term[2], color)
+        ||  !enif_get_number(env, term[3], &opacity)
+        ||  !enif_get_uint(env, term[4], &plot_type)
+        ||  !enif_get_int(env, term[5], &vertex_type)
+        ||  !enif_get_number(env, term[6], &ymin)
+        ||  !enif_get_number(env, term[7], &ymax)
+        ||  !enif_get_uint(env, term[8], &pattern)) {
             return enif_make_badarg(env);
         }
 
         img->draw_graph(*data, color, opacity, plot_type, vertex_type, ymin, ymax, pattern);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_circle)
@@ -589,20 +619,20 @@ struct NifCImg {
         double opacity;
         unsigned int pattern;
 
-        if (argc != 7
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &radius)
-        ||  !enif_get_color(env, argv[4], color)
-        ||  !enif_get_number(env, argv[5], &opacity)
-        ||  !enif_get_uint(env, argv[6], &pattern)) {
+        if (ality != 7
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &radius)
+        ||  !enif_get_color(env, term[4], color)
+        ||  !enif_get_number(env, term[5], &opacity)
+        ||  !enif_get_uint(env, term[6], &pattern)) {
             return enif_make_badarg(env);
         }
 
         img->draw_circle(x0, y0, radius, color, opacity, pattern);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_circle_filled) {
@@ -613,19 +643,19 @@ struct NifCImg {
         unsigned char color[3];
         double opacity;
 
-        if (argc != 6
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &radius)
-        ||  !enif_get_color(env, argv[4], color)
-        ||  !enif_get_number(env, argv[5], &opacity)) {
+        if (ality != 6
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &radius)
+        ||  !enif_get_color(env, term[4], color)
+        ||  !enif_get_number(env, term[5], &opacity)) {
             return enif_make_badarg(env);
         }
 
         img->draw_circle(x0, y0, radius, color, opacity);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_rectangle) {
@@ -635,21 +665,21 @@ struct NifCImg {
         double opacity;
         unsigned int pattern;
 
-        if (argc != 8
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &x1)
-        ||  !enif_get_int(env, argv[4], &y1)
-        ||  !enif_get_color(env, argv[5], color)
-        ||  !enif_get_number(env, argv[6], &opacity)
-        ||  !enif_get_uint(env, argv[7], &pattern)) {
+        if (ality != 8
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &x1)
+        ||  !enif_get_int(env, term[4], &y1)
+        ||  !enif_get_color(env, term[5], color)
+        ||  !enif_get_number(env, term[6], &opacity)
+        ||  !enif_get_uint(env, term[7], &pattern)) {
             return enif_make_badarg(env);
         }
 
         img->draw_rectangle(x0, y0, x1, y1, color, opacity, pattern);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_rectangle_filled) {
@@ -658,20 +688,20 @@ struct NifCImg {
         unsigned char color[3];
         double opacity;
 
-        if (argc != 7
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &x1)
-        ||  !enif_get_int(env, argv[4], &y1)
-        ||  !enif_get_color(env, argv[5], color)
-        ||  !enif_get_number(env, argv[6], &opacity)) {
+        if (ality != 7
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &x1)
+        ||  !enif_get_int(env, term[4], &y1)
+        ||  !enif_get_color(env, term[5], color)
+        ||  !enif_get_number(env, term[6], &opacity)) {
             return enif_make_badarg(env);
         }
 
         img->draw_rectangle(x0, y0, x1, y1, color, opacity);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_ratio_rectangle) {
@@ -681,15 +711,15 @@ struct NifCImg {
         double opacity;
         unsigned int pattern;
 
-        if (argc != 8
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_double(env, argv[1], &x0)
-        ||  !enif_get_double(env, argv[2], &y0)
-        ||  !enif_get_double(env, argv[3], &x1)
-        ||  !enif_get_double(env, argv[4], &y1)
-        ||  !enif_get_color(env, argv[5], color)
-        ||  !enif_get_number(env, argv[6], &opacity)
-        ||  !enif_get_uint(env, argv[7], &pattern)) {
+        if (ality != 8
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_double(env, term[1], &x0)
+        ||  !enif_get_double(env, term[2], &y0)
+        ||  !enif_get_double(env, term[3], &x1)
+        ||  !enif_get_double(env, term[4], &y1)
+        ||  !enif_get_color(env, term[5], color)
+        ||  !enif_get_number(env, term[6], &opacity)
+        ||  !enif_get_uint(env, term[7], &pattern)) {
             return enif_make_badarg(env);
         }
 
@@ -703,7 +733,7 @@ struct NifCImg {
 
         img->draw_rectangle(ix0, iy0, ix1, iy1, color, opacity, pattern);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_triangle) {
@@ -713,23 +743,23 @@ struct NifCImg {
         double opacity;
         unsigned int pattern;
 
-        if (argc != 10
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &x1)
-        ||  !enif_get_int(env, argv[4], &y1)
-        ||  !enif_get_int(env, argv[5], &x2)
-        ||  !enif_get_int(env, argv[6], &y2)
-        ||  !enif_get_color(env, argv[7], color)
-        ||  !enif_get_number(env, argv[8], &opacity)
-        ||  !enif_get_uint(env, argv[9], &pattern)) {
+        if (ality != 10
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &x1)
+        ||  !enif_get_int(env, term[4], &y1)
+        ||  !enif_get_int(env, term[5], &x2)
+        ||  !enif_get_int(env, term[6], &y2)
+        ||  !enif_get_color(env, term[7], color)
+        ||  !enif_get_number(env, term[8], &opacity)
+        ||  !enif_get_uint(env, term[9], &pattern)) {
             return enif_make_badarg(env);
         }
 
         img->draw_triangle(x0, y0, x1, y1, x2, y2, color, opacity, pattern);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_triangle_filled) {
@@ -738,22 +768,22 @@ struct NifCImg {
         unsigned char color[3];
         double opacity;
 
-        if (argc != 9
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_int(env, argv[1], &x0)
-        ||  !enif_get_int(env, argv[2], &y0)
-        ||  !enif_get_int(env, argv[3], &x1)
-        ||  !enif_get_int(env, argv[4], &y1)
-        ||  !enif_get_int(env, argv[5], &x2)
-        ||  !enif_get_int(env, argv[6], &y2)
-        ||  !enif_get_color(env, argv[7], color)
-        ||  !enif_get_number(env, argv[8], &opacity)) {
+        if (ality != 9
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x0)
+        ||  !enif_get_int(env, term[2], &y0)
+        ||  !enif_get_int(env, term[3], &x1)
+        ||  !enif_get_int(env, term[4], &y1)
+        ||  !enif_get_int(env, term[5], &x2)
+        ||  !enif_get_int(env, term[6], &y2)
+        ||  !enif_get_color(env, term[7], color)
+        ||  !enif_get_number(env, term[8], &opacity)) {
             return enif_make_badarg(env);
         }
 
         img->draw_triangle(x0, y0, x1, y1, x2, y2, color, opacity);
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(draw_image)
@@ -762,16 +792,16 @@ struct NifCImg {
         CImgT* mask;
         double opacity;
 
-        if (argc != 3
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_image(env, argv[1], &mask)
-        ||  !enif_get_number(env, argv[2], &opacity)) {
+        if (ality != 3
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_image(env, term[1], &mask)
+        ||  !enif_get_number(env, term[2], &opacity)) {
             return enif_make_badarg(env);
         }
 
         img->draw_image(*mask, opacity);
 
-    	return argv[0];
+    	return term[0];
     }
 
     static DECL_NIF(map_color) {
@@ -779,10 +809,10 @@ struct NifCImg {
         std::string lut_name;
         unsigned int boundary_conditions;
 
-        if (argc != 3
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_str(env, argv[1], &lut_name)
-        ||  !enif_get_uint(env, argv[2], &boundary_conditions)) {
+        if (ality != 3
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_str(env, term[1], &lut_name)
+        ||  !enif_get_uint(env, term[2], &boundary_conditions)) {
             return enif_make_badarg(env);
         }
 
@@ -812,16 +842,16 @@ struct NifCImg {
         CImgT* img;
         CImgDisplay* disp;
 
-        if (argc != 2
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !NifCImgDisplay::enif_get_display(env, argv[1], &disp)) {
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !NifCImgDisplay::enif_get_display(env, term[1], &disp)) {
             return enif_make_badarg(env);
         }
 
         img->display(*disp);
 #endif
 
-        return argv[0];
+        return term[0];
     }
 
     static DECL_NIF(to_bin) {
@@ -831,13 +861,13 @@ struct NifCImg {
         bool        nchw;    // to transpose NCHW
         bool        bgr;     // to convert RGB to BGR
 
-        if (argc != 6
-        ||  !enif_get_image(env, argv[0], &img)
-        ||  !enif_get_str(env, argv[1], &dtype)
-        ||  !enif_get_double(env, argv[2], &lo)
-        ||  !enif_get_double(env, argv[3], &hi)
-        ||  !enif_get_bool(env, argv[4], &nchw)
-        ||  !enif_get_bool(env, argv[5], &bgr)) {
+        if (ality != 6
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_str(env, term[1], &dtype)
+        ||  !enif_get_double(env, term[2], &lo)
+        ||  !enif_get_double(env, term[3], &hi)
+        ||  !enif_get_bool(env, term[4], &nchw)
+        ||  !enif_get_bool(env, term[5], &bgr)) {
             return enif_make_badarg(env);
         }
 
@@ -895,24 +925,24 @@ struct NifCImg {
         CImgT* src;
         int cx, cy, cz;
 
-        if (argc != 6
-        ||  !enif_get_image(env, argv[0], &dst)
-        ||  !enif_get_image(env, argv[1], &src)
-        ||  !enif_is_list(env, argv[2])
-        ||  !enif_get_int(env, argv[3], &cx)
-        ||  !enif_get_int(env, argv[4], &cy)
-        ||  !enif_get_int(env, argv[5], &cz)) {
+        if (ality != 6
+        ||  !enif_get_image(env, term[0], &dst)
+        ||  !enif_get_image(env, term[1], &src)
+        ||  !enif_is_list(env, term[2])
+        ||  !enif_get_int(env, term[3], &cx)
+        ||  !enif_get_int(env, term[4], &cy)
+        ||  !enif_get_int(env, term[5], &cz)) {
             return enif_make_badarg(env);
         }
 
-        ERL_NIF_TERM address = argv[2];
+        ERL_NIF_TERM address = term[2];
         ERL_NIF_TERM head;
         while (enif_get_list_cell(env, address, &head, &address)) {
-            int ality;
+            int count;
             const ERL_NIF_TERM* pair;
             int q[3], p[3];
-            if (!enif_get_tuple(env, head, &ality, &pair)
-            ||  ality != 2
+            if (!enif_get_tuple(env, head, &count, &pair)
+            ||  count != 2
             ||  !enif_get_pos(env, pair[0], q)
             ||  !enif_get_pos(env, pair[1], p)) {
                 continue;
@@ -928,7 +958,7 @@ struct NifCImg {
             }
         }
 
-        return argv[0];
+        return term[0];
     }
 
     static MUT DECL_NIF(transfer3) {
@@ -937,21 +967,21 @@ struct NifCImg {
         int p[3];
         CImg<int>* map;
 
-        if (argc != 3
-        ||  !enif_get_image(env, argv[0], &dst)
-        ||  !enif_get_image(env, argv[1], &src)
-        ||  !enif_get_pos(env, argv[2], p)
-        ||  !NifCImg<int>::enif_get_image(env, argv[3], &map)){
+        if (ality != 3
+        ||  !enif_get_image(env, term[0], &dst)
+        ||  !enif_get_image(env, term[1], &src)
+        ||  !enif_get_pos(env, term[2], p)
+        ||  !NifCImg<int>::enif_get_image(env, term[3], &map)){
             return enif_make_badarg(env);
         }
 
-        ERL_NIF_TERM address = argv[3];
+        ERL_NIF_TERM address = term[3];
         ERL_NIF_TERM head;
         while (enif_get_list_cell(env, address, &head, &address)) {
-            int ality;
+            int count;
             const ERL_NIF_TERM* pair;
-            if (!enif_get_tuple(env, head, &ality, &pair)
-            ||  ality != 2
+            if (!enif_get_tuple(env, head, &count, &pair)
+            ||  count != 2
             ||  !enif_is_list(env, pair[0])
             ||  !enif_is_list(env, pair[1])) {
                 continue;
@@ -970,7 +1000,7 @@ struct NifCImg {
             }
         }
 
-        return argv[0];
+        return term[0];
     }
 
     static DECL_NIF(runit);

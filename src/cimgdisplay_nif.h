@@ -37,12 +37,12 @@ namespace NifCImgDisplay {
         bool is_fullscreen;
         bool is_closed;
 
-        if (argc != 5
-        ||  !T::enif_get_image(env, argv[0], &img)
-        ||  !enif_inspect_binary(env, argv[1], &bin)
-        ||  !enif_get_uint(env, argv[2], &normalization)
-        ||  !enif_get_bool(env, argv[3], &is_fullscreen)
-        ||  !enif_get_bool(env, argv[4], &is_closed)) {
+        if (ality != 5
+        ||  !T::enif_get_image(env, term[0], &img)
+        ||  !enif_inspect_binary(env, term[1], &bin)
+        ||  !enif_get_uint(env, term[2], &normalization)
+        ||  !enif_get_bool(env, term[3], &is_fullscreen)
+        ||  !enif_get_bool(env, term[4], &is_closed)) {
             return enif_make_badarg(env);
         }
         std::string title((const char*)bin.data, bin.size);
@@ -61,36 +61,36 @@ namespace NifCImgDisplay {
     DECL_NIF(wait) {
         CImgDisplay *display;
 
-        if (argc != 1
-        ||  !enif_get_display(env, argv[0], &display)) {
+        if (ality != 1
+        ||  !enif_get_display(env, term[0], &display)) {
             return enif_make_badarg(env);
         }
 
         display->wait();
 
-        return argv[0];
+        return term[0];
     }
 
     DECL_NIF(wait_time) {
         CImgDisplay *display;
         unsigned int milliseconds;
 
-        if (argc != 2
-        ||  !enif_get_display(env, argv[0], &display)
-        ||  !enif_get_uint(env, argv[1], &milliseconds)) {
+        if (ality != 2
+        ||  !enif_get_display(env, term[0], &display)
+        ||  !enif_get_uint(env, term[1], &milliseconds)) {
             return enif_make_badarg(env);
         }
 
         display->wait(milliseconds);
 
-        return argv[0];
+        return term[0];
     }
 
     DECL_NIF(is_closed) {
         CImgDisplay* display;
 
-        if (argc != 1
-        ||  !enif_get_display(env, argv[0], &display)) {
+        if (ality != 1
+        ||  !enif_get_display(env, term[0], &display)) {
             return enif_make_badarg(env);
         }
 
@@ -100,8 +100,8 @@ namespace NifCImgDisplay {
     DECL_NIF(button) {
         CImgDisplay* display;
 
-        if (argc != 1
-        ||  !enif_get_display(env, argv[0], &display)) {
+        if (ality != 1
+        ||  !enif_get_display(env, term[0], &display)) {
             return enif_make_badarg(env);
         }
 
@@ -111,8 +111,8 @@ namespace NifCImgDisplay {
     DECL_NIF(mouse_y) {
         CImgDisplay* display;
 
-        if (argc != 1
-        ||  !enif_get_display(env, argv[0], &display)) {
+        if (ality != 1
+        ||  !enif_get_display(env, term[0], &display)) {
             return enif_make_badarg(env);
         }
 
