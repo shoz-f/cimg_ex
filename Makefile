@@ -91,14 +91,14 @@ setup: $(EXTRA_LIB)
 # NIF name
 NIF_TABLE	+= src/cimg_nif.inc
 src/cimg_nif.inc: src/cimg_nif.h
-	py nif_tbl.py -o $@ --prefix cimg_ --ns NifCImgU8:: $<
+	python3 nif_tbl.py -o $@ --prefix cimg_ --ns NifCImgU8:: $<
 
 NIF_TABLE	+= src/cimgdisplay_nif.inc
 src/cimgdisplay_nif.inc: src/cimgdisplay_nif.h
-	py nif_tbl.py -o $@ --prefix cimgdisplay_ --ns NifCImgDisplay:: $<
+	python3 nif_tbl.py -o $@ --prefix cimgdisplay_ --ns NifCImgDisplay:: $<
 
 NIF_STUB	= lib/cimg/$(NIF_NAME).ex
 $(NIF_STUB): $(NIF_TABLE)
-	py nif_stub.py -o $@ CImg.NIF $^ src/cimgdisplay_nif.ext
+	python3 nif_stub.py -o $@ CImg.NIF $^ src/cimgdisplay_nif.ext
 
 $(BUILD)/$(NIF_NAME).o: $(NIF_STUB)
