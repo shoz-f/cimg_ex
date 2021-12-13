@@ -23,52 +23,37 @@ class NifTbl:
     def __init__(self, prefix="", namespace=""):
         self.prefix = prefix
         self.ns     = namespace
-        self.keys   = []
-        self.ality  = dict()
+        self.func   = []
+        self.col    = 40
 
     def parse(self, file):
-        key  = ""
+        name  = None
         for line in file:
             match = re.search(r'\bDECL_NIF\s*\((.*)\)', line)
             if match:
-                key = match.group(1)
+                name = match.group(1)
                 continue
 
             match = re.search(r'ality\s*!=\s*(\d+)', line)
-            if match:
-                self.ality[key] = int(match.group(1))
-                self.keys.append(key)
+            if match and name != None:
+                ality = int(match.group(1))
+                self.func.append((name, ality))
+                name = None
                 continue
 
     def mk_niftbl(self, output):
-        for key in self.keys:
-            name  = self.prefix + key
-            ality = self.ality[key]
-            entry = self.ns + key
-            text  = '{{"{name}",{pad:{loc1}}{ality:2d}, {entry},{pad:{loc2}}0}},'.format(
-                name=name,
-                loc1=38-len(name),
-                ality=ality,
-                entry=entry,
-                loc2=38-len(entry),
-                pad='')
-            print(text, file=output)
-
-#<SUBROUTINE>###################################################################
-# Function:     
-# Description:  
-# Dependencies: 
-################################################################################
-def make_nifstub(file, keys, ality, prefix1=None, prefix2=None):
-    for key in keys:
-        name  = (prefix1 or "")+key
-        
-        text = 'def {name}(_1),\n'\
-               '  do: raise("NIF {name}/{ality} not implemented")'.format(
-                 name=name,
-                 ality=ality[key],
-               )
-        print(text)
+        for name, ality in self.func:
+            erl_name = self.prefix + name
+            cxx_name = self.ns + name
+            print('{{"{erl_name}",{pad:{loc1}}{ality:2d},  {cxx_name},{pad:{loc2}}0}},'
+                   .format(
+                       erl_name=erl_name,
+                       loc1=self.col-len(erl_name)-3,
+                       ality=ality,
+                       cxx_name=cxx_name,
+                       loc2=self.col-len(cxx_name)-1,
+                       pad=''),
+                   file=output)
 
 #<MAIN>#########################################################################
 # Function:     

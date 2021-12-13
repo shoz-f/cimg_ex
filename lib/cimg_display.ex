@@ -34,7 +34,7 @@ defmodule CImgDisplay do
   defdelegate wait(cimgdisplay),
     to: NIF, as: :cimgdisplay_wait
   defdelegate wait(cimgdisplay, milliseconds),
-    to: NIF, as: :cimgdisplay_wait
+    to: NIF, as: :cimgdisplay_wait_time
   defdelegate is_closed(cimgdisplay),
     to: NIF, as: :cimgdisplay_is_closed
   defdelegate button(cimgdisplay),

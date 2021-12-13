@@ -119,7 +119,7 @@ struct NifCImg {
         return enif_make_image(env, img);
     }
 
-    static DECL_NIF(create_list) {
+    static _DECL_NIF(create_list) {
         unsigned int size_x, size_y, size_z, size_c;
 
         if (ality != 5
@@ -786,7 +786,7 @@ struct NifCImg {
         return term[0];
     }
 
-    static MUT DECL_NIF(draw_image)
+    static MUT _DECL_NIF(draw_image)
     {
         CImgT* img;
         CImgT* mask;
@@ -961,7 +961,7 @@ struct NifCImg {
         return term[0];
     }
 
-    static MUT DECL_NIF(transfer3) {
+    static MUT _DECL_NIF(transfer3) {
         CImgT* dst;
         CImgT* src;
         int p[3];

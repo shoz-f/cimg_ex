@@ -30,7 +30,7 @@ namespace NifCImgDisplay {
     }
 
     template <class T>
-    DECL_NIF(create) {
+    _DECL_NIF(create) {
         typename T::CImgT* img;
         ErlNifBinary bin;
         unsigned int normalization;
@@ -119,12 +119,5 @@ namespace NifCImgDisplay {
         return enif_make_int(env, display->mouse_y());
     }
 }
-
-#define NIF_CIMG_DISPLAY_FUNCS \
-{"cimgdisplay_wait",      1, NifCImgDisplay::wait,               0},\
-{"cimgdisplay_wait",      2, NifCImgDisplay::wait_time,          0},\
-{"cimgdisplay_is_closed", 1, NifCImgDisplay::is_closed,          0},\
-{"cimgdisplay_button",    1, NifCImgDisplay::button,             0},\
-{"cimgdisplay_mouse_y",   1, NifCImgDisplay::mouse_y,            0},
 
 /*** cimgdisplay_nif.h ****************************************************}}}*/

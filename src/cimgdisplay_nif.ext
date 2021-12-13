@@ -1,0 +1,1 @@
+{"cimgdisplay_u8",        5, NifCImgDisplay::create<NifCImgU8>,  0},
