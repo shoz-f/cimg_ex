@@ -2,7 +2,14 @@
 #define cimg_plugin "CImgEx.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_JPEG
+#define STBI_NO_BMP
+#define STBI_NO_PSD
+#define STBI_NO_TGA
+#define STBI_NO_GIF
+#define STBI_NO_HDR
+#define STBI_NO_PIC
+#define STBI_NO_PNM
+
 #include "stb_image.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -13,14 +20,16 @@
     ||  !cimg::strcasecmp(ext,"jpeg") \
     ||  !cimg::strcasecmp(ext,"jpe") \
     ||  !cimg::strcasecmp(ext,"jfif") \
-    ||  !cimg::strcasecmp(ext,"jif")) return load_stb_image_jpeg(filename);
+    ||  !cimg::strcasecmp(ext,"jif") \
+    ||  !cimg::strcasecmp(ext,"png")) return load_stb_image(filename);
 
 #define cimg_save_plugin(filename) \
     if (!cimg::strcasecmp(ext,"jpg") \
     ||  !cimg::strcasecmp(ext,"jpeg") \
     ||  !cimg::strcasecmp(ext,"jpe") \
     ||  !cimg::strcasecmp(ext,"jfif") \
-    ||  !cimg::strcasecmp(ext,"jif")) return save_stb_image_jpeg(filename);
+    ||  !cimg::strcasecmp(ext,"jif") \
+    ||  !cimg::strcasecmp(ext,"png")) return save_stb_image(filename); \
 
 #include "CImg.h"
 
@@ -28,13 +37,13 @@
 /**************************************************************************}}}*/
 /*** CImg Plugins:                                                          ***/
 /**************************************************************************{{{*/
-CImg<T>& load_stb_image_jpeg(const char *const filename)
+CImg<T>& load_stb_image(const char *const filename)
 {
   int x, y, n;
   unsigned char* data = stbi_load(filename, &x, &y, &n, 0);
   if (data == NULL) {
     throw CImgIOException(_cimg_instance
-                          "load_stb_image_jpeg: %s.",
+                          "load_stb_image: %s.",
                           cimg_instance, stbi_failure_reason());
   }
 
@@ -73,12 +82,12 @@ CImg<T>& load_stb_image_jpeg(const char *const filename)
   return *this;
 }
 
-const CImg<T>& save_stb_image_jpeg(const char *const filename, const unsigned int quality=100) const
+const CImg<T>& save_stb_image(const char *const filename) const
 {
   if (is_empty()) { return *this; }
   if (_depth > 1) {
     cimg::warn(_cimg_instance
-               "save_stb_image_jpeg(): Instance is volumetric, only the first slice will be saved in file '%s'.",
+               "save_stb_image(): Instance is volumetric, only the first slice will be saved in file '%s'.",
                cimg_instance,
                filename);
   }
@@ -86,7 +95,7 @@ const CImg<T>& save_stb_image_jpeg(const char *const filename, const unsigned in
   unsigned char *buff = reinterpret_cast<unsigned char*>(malloc(_width*_height*_spectrum));
   if (buff == NULL) {
     throw CImgIOException(_cimg_instance
-                           "save_stb_image_jpeg: Failed to allocate memory for work.",
+                           "save_stb_image: Failed to allocate memory for work.",
                            cimg_instance);
   }
 
@@ -124,8 +133,14 @@ const CImg<T>& save_stb_image_jpeg(const char *const filename, const unsigned in
     }
     break;
   }
-  
-  stbi_write_jpg(filename, _width, _height, _spectrum, buff, quality);
+
+  const char *const ext = cimg::split_filename(filename);
+  if (!cimg::strcasecmp(ext,"png")) {
+      stbi_write_png(filename, _width, _height, _spectrum, buff, 0);
+  }
+  else {
+      stbi_write_jpg(filename, _width, _height, _spectrum, buff, 100);
+  }
   return *this;
 }
 
@@ -135,7 +150,7 @@ CImg<T>& load_from_memory(unsigned char const *buffer, int len)
   unsigned char* data = stbi_load_from_memory(buffer, len, &x, &y, &n, 0);
   if (data == NULL) {
     throw CImgIOException(_cimg_instance
-                          "load_stb_image_jpeg: %s.",
+                          "load_from_memory: %s.",
                           cimg_instance, stbi_failure_reason());
   }
 
