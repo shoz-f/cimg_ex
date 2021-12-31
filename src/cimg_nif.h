@@ -508,6 +508,26 @@ struct NifCImg {
         return enif_make_image(env, gray);
     }
 
+    static DECL_NIF(get_invert) {
+        CImgT* img;
+        int opt_pn;
+
+        if (ality != 1
+        ||  !enif_get_image(env, term[0], &img)) {
+            return enif_make_badarg(env);
+        }
+
+        CImgT* inv;
+        try {
+            inv = new CImgT(img->operator~());
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+
+        return enif_make_image(env, inv);
+    }
+
     static DECL_NIF(get_yuv) {
         CImgT* img;
 

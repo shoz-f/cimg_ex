@@ -84,7 +84,7 @@ defmodule CImg.Builder do
     %CImg{handle: h}
   end
   
-  def get_resize(%Builder{handle: img}=builder, {x, y}=_size, align, fill) do
+  def resize(%Builder{handle: img}=_builder, {x, y}=_size, align, fill) do
     align = case align do
       :none -> 0
       :ul   -> 1
@@ -96,9 +96,5 @@ defmodule CImg.Builder do
     
     with {:ok, packed} <- NIF.cimg_get_resize(img, x, y, align, fill),
       do: %CImg{handle: packed}
-  end
-  
-  def test(%Builder{}=_builder) do
-    IO.inspect("builder")
   end
 end

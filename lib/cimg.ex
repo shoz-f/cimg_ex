@@ -291,8 +291,8 @@ defmodule CImg do
     res = CImg.get_resize(img, {300,300}, :ul)
     ```
   """
-  def get_resize(img, size, align \\ :none, fill \\ 0)
-  def get_resize(%CImg{}=cimg, {x, y}=_size, align, fill) do
+  def resize(img, size, align \\ :none, fill \\ 0)
+  def resize(%CImg{}=cimg, {x, y}=_size, align, fill) do
     align = case align do
       :none -> 0
       :ul   -> 1
@@ -303,7 +303,7 @@ defmodule CImg do
     with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill),
       do: %CImg{handle: packed}
   end
-  defdelegate get_resize(builder, size, align, fill),
+  defdelegate resize(builder, size, align, fill),
     to: Builder
 
 
@@ -375,16 +375,30 @@ defmodule CImg do
   ## Examples
   
     ```Elixir
-    gray = CImg.get_gray(img, 1)
+    gray = CImg.gray(img, 1)
     # get inverted gray image
     ```
   """
-  def get_gray(cimg, opt_pn \\ 0) do
+  def gray(cimg, opt_pn \\ 0) do
     with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn),
       do: %CImg{handle: gray}
   end
 
-
+  @doc """
+  Get the inverted image of the image.
+  
+  ## Examples
+  
+    ```Elixir
+    inv = CImg.invert(img)
+    # get inverted image
+    ```
+  """
+  def invert(cimg) do
+    with {:ok, inv} <- NIF.cimg_get_invert(cimg),
+      do: %CImg{handle: inv}
+  end
+  
   def get_yuv(cimg) do
     with {:ok, yuv} <- NIF.cimg_get_yuv(cimg),
       do: %CImg{handle: yuv}
@@ -676,10 +690,4 @@ defmodule CImg do
   """
   defdelegate display(cimg, disp),
     to: NIF, as: :cimg_display
-
-
-  def test(%CImg{}=cimg) do
-    IO.inspect("cimg")
-  end
-  defdelegate test(img), to: Builder
 end
