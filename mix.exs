@@ -42,7 +42,8 @@ defmodule Cimg.MixProject do
     [
       name: "cimg",
       licenses: ["Apache-2.0"],
-      links: %{"GitHub" => "https://github.com/shoz-f/cimg_ex.git"}
+      links: %{"GitHub" => "https://github.com/shoz-f/cimg_ex.git"},
+      files: ~w(lib mix.exs README* LICENSE* Makefile nif_*.py src)
     ]
   end
 end
