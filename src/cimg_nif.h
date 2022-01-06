@@ -234,6 +234,33 @@ struct NifCImg {
         return enif_make_image(env, img);
     }
 
+    static DECL_NIF(convert_to) {
+        CImgT* img;
+        char format[5];
+
+        if (ality != 2
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_atom(env, term[1], format, 5, ERL_NIF_LATIN1)
+        ||  (std::strcmp(format, "jpeg") != 0 && std::strcmp(format, "png") != 0)) {
+            return enif_make_badarg(env);
+        }
+
+        auto mem = img->save_to_memory(format);
+        if (mem.size() == 0) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't convert empty image", ERL_NIF_LATIN1));
+        }
+
+        ERL_NIF_TERM binary;
+        unsigned char* buff = enif_make_new_binary(env, mem.size(), &binary);
+        if (buff == NULL) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+        }
+
+        std::memcpy(buff, mem.data(), mem.size());
+
+        return enif_make_tuple2(env, enif_make_ok(env), binary);
+    }
+
     /**********************************************************************}}}*/
     /* PIXEL operations                                                       */
     /**********************************************************************{{{*/

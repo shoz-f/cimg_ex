@@ -84,7 +84,7 @@ defmodule CImg.Builder do
     %CImg{handle: h}
   end
   
-  def resize(%Builder{handle: img}=_builder, {x, y}=_size, align, fill) do
+  def resize(%Builder{handle: img}=builder, {x, y}=_size, align, fill) do
     align = case align do
       :none -> 0
       :ul   -> 1
@@ -92,7 +92,7 @@ defmodule CImg.Builder do
       _     -> raise(ArgumentError, "unknown align '#{align}'.")
     end
 
-    {:resize, x, y, align, fill}
+    [{:resize, x, y, align, fill} | builder.script]
     
     with {:ok, packed} <- NIF.cimg_get_resize(img, x, y, align, fill),
       do: %CImg{handle: packed}
