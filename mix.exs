@@ -4,7 +4,7 @@ defmodule Cimg.MixProject do
   def project do
     [
       app: :cimg,
-      version: "0.1.6",
+      version: "0.1.7",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       make_executable: "make",

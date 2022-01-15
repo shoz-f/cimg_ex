@@ -240,7 +240,7 @@ struct NifCImg {
 
         if (ality != 2
         ||  !enif_get_image(env, term[0], &img)
-        ||  !enif_get_atom(env, term[1], format, 5, ERL_NIF_LATIN1)
+        ||  !enif_get_atom(env, term[1], format, sizeof(format), ERL_NIF_LATIN1)
         ||  (std::strcmp(format, "jpeg") != 0 && std::strcmp(format, "png") != 0)) {
             return enif_make_badarg(env);
         }
@@ -851,31 +851,68 @@ struct NifCImg {
     	return term[0];
     }
 
-    static DECL_NIF(map_color) {
+    static DECL_NIF(color_mapping) {
         CImgT* img;
-        std::string lut_name;
+        char lut_name[8];
         unsigned int boundary_conditions;
 
         if (ality != 3
         ||  !enif_get_image(env, term[0], &img)
-        ||  !enif_get_str(env, term[1], &lut_name)
+        ||  !enif_get_atom(env, term[1], lut_name, sizeof(lut_name), ERL_NIF_LATIN1)
         ||  !enif_get_uint(env, term[2], &boundary_conditions)) {
             return enif_make_badarg(env);
         }
 
         CImgT lut;
-        if (lut_name == "default")     { lut = CImgT::default_LUT256(); }
-        else if (lut_name == "lines") { lut = CImgT::lines_LUT256();   }
-        else if (lut_name == "hot")   { lut = CImgT::hot_LUT256();     }
-        else if (lut_name == "cool")  { lut = CImgT::cool_LUT256();    }
-        else if (lut_name == "jet")   { lut = CImgT::jet_LUT256();     }
+        if (std::strcmp(lut_name, "default")     == 0) { lut = CImgT::default_LUT256(); }
+        else if (std::strcmp(lut_name, "lines") == 0) { lut = CImgT::lines_LUT256();   }
+        else if (std::strcmp(lut_name, "hot")   == 0) { lut = CImgT::hot_LUT256();     }
+        else if (std::strcmp(lut_name, "cool")  == 0) { lut = CImgT::cool_LUT256();    }
+        else if (std::strcmp(lut_name, "jet")   == 0) { lut = CImgT::jet_LUT256();     }
         else {
         	return enif_make_badarg(env);
         }
 
         CImgT* map;
         try {
-            map = new CImgT(img->map(lut, boundary_conditions));
+            map = new CImgT(img->get_map(lut, boundary_conditions));
+        }
+        catch (CImgException& e) {
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));
+        }
+        
+        return enif_make_image(env, map);
+    }
+
+    static DECL_NIF(color_mapping_by) {
+        CImgT* img;
+        unsigned int lut_length;
+        char lut_name[8];
+        unsigned int boundary_conditions;
+
+        if (ality != 3
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_list_length(env, term[1], &lut_length)
+        ||  !enif_get_uint(env, term[2], &boundary_conditions)) {
+            return enif_make_badarg(env);
+        }
+
+        ERL_NIF_TERM list = term[1], item;
+        unsigned char color[3];
+        CImgT lut(lut_length, 1, 1, 3);
+        for (int i = 0; i < lut_length; i++) {
+            if (!enif_get_list_cell(env, list, &item, &list)
+            ||  !enif_get_color(env, item, color)) {
+                return enif_make_badarg(env);
+            }
+            lut(i, 0, 0, 0) = color[0];
+            lut(i, 0, 0, 1) = color[1];
+            lut(i, 0, 0, 2) = color[2];
+        }
+
+        CImgT* map;
+        try {
+            map = new CImgT(img->get_map(lut, boundary_conditions));
         }
         catch (CImgException& e) {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, e.what(), ERL_NIF_LATIN1));

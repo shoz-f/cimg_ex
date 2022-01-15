@@ -38,12 +38,12 @@ defmodule CImg do
   # convert CImg image to Nx.Tensor
   iex> img0 = CImg.load("sample.jpg")
   %CImg{{2448, 3264, 1, 3}, handle: #Reference<0.2112145695.4205182979.233827>}
-  iex> tensor = CImg.to_flat(img0, dtype: "<u8").data
+  iex> tensor = CImg.to_binary(img0, dtype: "<u8")
          |> Nx.from_binary({:u, 8})
 
   # convert Nx.Tensor to CImg image
   iex> img1 = Nx.to_binary(tensor)
-         |>CImg.create_from_bin(2448, 3264, 1, 3, "<u8")
+         |>CImg.from_bin(2448, 3264, 1, 3, "<u8")
   ```
 
   ### Demo
@@ -100,6 +100,7 @@ defmodule CImg do
   end
 
 
+  @doc deprecated: "Use `from_binary/6` instead"
   @doc """
   Create image{x,y,z,c} from raw binary.
   `create_from_bin` helps you to make the image from the serialiezed output tensor of DNN model.
@@ -144,7 +145,8 @@ defmodule CImg do
       do: %CImg{handle: h}
   end
 
-
+  
+  @doc deprecated: "Use `from_binary/1` instead"
   @doc """
   Load a image from memory.
   You can create an image from loaded binary data of the image file.
@@ -165,6 +167,50 @@ defmodule CImg do
       do: %CImg{handle: h}
   end
 
+
+  @doc """
+  Create a image from jpeg/png format binary.
+  You can create an image from loaded binary of the JPEG/PNG file.
+
+  ## Parameters
+
+    * jpeg_or_png - loaded binary of the image file.
+
+  ## Examples
+
+    ```Elixir
+    jpeg = File.read!("sample.jpg")
+    img = CImg.from_binary(jpeg)
+    ```
+  """
+  def from_binary(jpeg_or_png) do
+    with {:ok, h} <- NIF.cimg_load_from_memory(jpeg_or_png),
+      do: %CImg{handle: h}
+  end
+  
+  @doc """
+  Create image{x,y,z,c} from raw binary.
+  `create_from_bin` helps you to make the image from the serialiezed output tensor of DNN model.
+
+  ## Parameters
+
+    * bin - raw binary data to have in a image.
+    * x,y,z,c - image's x-size, y-size, z-size and spectrum.
+    * dtype - data type in the binary. any data types are converted to int8 in the image.
+      - "<f4" - 32bit float (available value in range 0.0..1.0)
+      - "<u1" - 8bit unsigned integer
+
+  ## Examples
+
+    ```Elixir
+    bin = TflInterp.get_output_tensor(__MODULE__, 0)
+    img = CImg.create_from_bin(bin, 300, 300, 1, 3, "<f4")
+    ```
+  """
+  def from_binary(bin, x, y, z, c, dtype) when is_binary(bin) do
+    with {:ok, h} <- NIF.cimg_create_from_bin(bin, x, y, z, c, dtype),
+      do: %CImg{handle: h}
+  end
 
   @doc """
   Save the image to the file.
@@ -204,6 +250,7 @@ defmodule CImg do
   end
 
 
+  @doc deprecated: "Use `to_binary/2` instead"
   @doc """
   Get serialized binary of the image from top-left to bottom-right.
   `to_flat/2` helps you to make 32bit-float arrary for the input tensors of DNN model.
@@ -247,7 +294,7 @@ defmodule CImg do
 
   ## Parameters
 
-    * npy - %Npy{} has 4 rank.
+    * npy - %Npy{} has 3 rank.
 
   ## Examples
 
@@ -256,8 +303,8 @@ defmodule CImg do
     img = CImg.from_npy(npy)
     ```
   """
-  def from_npy(%{descr: dtype, shape: {x, y, z, c}, data: bin}) do
-    create_from_bin(bin, x, y, z, c, dtype)
+  def from_npy(%{descr: dtype, shape: {h, w, c}, data: bin}) do
+    create_from_bin(bin, w, h, 1, c, dtype)
   end
 
 
@@ -267,26 +314,46 @@ defmodule CImg do
   ## Parameters
 
     * cimg - image object.
+    * opts - conversion options
+      - { :dtype, xx } - convert pixel value to data type.
+           available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
+      - { :range, {lo, hi} } - normarilzed range when :dtype is "<f4".
+           default range: {0.0, 1.0}
+      - :nchw - transform axes NHWC to NCHW.
+      - :bgr - convert color RGB -> BGR.
 
   ## Examples
 
     ```Elixir
-    npy = CImg.load("sample.jpg")
+    img = CImg.load("sample.jpg")
+
+    npy1 =
+      img
       |> CImg.to_npy()
+
+    npy2 =
+      img
+      |> CImg.to_npy([{dtype: "<f4"}, {:range, {-1.0, 1.0}}, :nchw])
+    # convert pixel value to 32bit-float in range -1.0..1.0 and transform axis to NCHW.
     ```
   """
-  def to_npy(cimg) do
-    with {:ok, bin} <- NIF.cimg_to_bin(cimg, "<u1", 0.0, 1.0, false, false) do
+  def to_npy(cimg, opts \\ []) do
+    dtype    = Keyword.get(opts, :dtype, "<f4")
+    {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
+    nchw     = :nchw in opts
+    bgr      = :bgr  in opts
+    with {:ok, bin} <- NIF.cimg_to_bin(cimg, dtype, lo, hi, nchw, bgr) do
+      {w, h, _z, c} = shape(cimg)
       %{
-        descr: "<u1",
+        descr: dtype,
         fortran_order: false,
-        shape: shape(cimg),
+        shape: unless nchw do {h, w, c} else {c, h, w} end,
         data: bin
       }
     end
   end
 
-
+  @doc deprecated: "Use `to_binary/2` instead"
   @doc """
   Convert the image to JPEG binary.
 
@@ -307,7 +374,7 @@ defmodule CImg do
     with {:ok, bin} <- NIF.cimg_convert_to(cimg, :jpeg), do: bin
   end
 
-
+  @doc deprecated: "Use `to_binary/2` instead"
   @doc """
   Convert the image to PNG binary.
 
@@ -324,6 +391,64 @@ defmodule CImg do
   """
   def to_png(cimg) do
     with {:ok, bin} <- NIF.cimg_convert_to(cimg, :png), do: bin
+  end
+  
+  @doc """
+  Get serialized binary of the image from top-left to bottom-right.
+  `to_binary/2` helps you to make 32bit-float arrary for the input tensors of DNN model
+  or jpeg/png format binary on memory.
+
+  ## Parameters
+
+    * cimg - image object.
+    * opts - conversion options
+      - :jpeg - convert to JPEG format binary.
+      - :png - convert to PNG format binary.
+
+      following options can be applied when converting the image to row binary.
+      - { :dtype, xx } - convert pixel value to data type.
+           available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
+      - { :range, {lo, hi} } - normarilzed range when :dtype is "<f4".
+           default range: {0.0, 1.0}
+      - :nchw - transform axes NHWC to NCHW.
+      - :bgr - convert color RGB -> BGR.
+
+  ## Examples
+
+    ```Elixir
+    img = CImg.load("sample.jpg")
+    
+    jpeg = CImg.to_binary(img, :jpeg)
+    # convert to JPEG format binary on memory.
+    
+    png = CImg.to_binary(img, :png)
+    # convert to PNG format binary on memory.
+    
+    bin1 = CImg.to_binary(img, [{dtype: "<f4"}, {:range, {-1.0, 1.0}}, :nchw])
+    # convert pixel value to 32bit-float in range -1.0..1.0 and transform axis to NCHW.
+
+    bin2 = CImg.to_binary(img, dtype: "<f4")
+    # convert pixel value to 32bit-float in range 0.0..1.0.
+    ```
+  """
+  def to_binary(cimg, opts \\ [])
+
+  def to_binary(cimg, :jpeg) do
+    with {:ok, bin} <- NIF.cimg_convert_to(cimg, :jpeg) do
+      bin
+    end
+  end
+
+  def to_binary(cimg, :png) do
+    with {:ok, bin} <- NIF.cimg_convert_to(cimg, :png) do
+      bin
+    end
+  end
+
+  def to_binary(cimg, opts) do
+    with %{data: bin} <- to_npy(cimg, opts) do
+      bin
+    end
   end
 
 
@@ -480,13 +605,39 @@ defmodule CImg do
   ## Parameters
 
     * cimg - image object %CImg{} to save.
-    * lut - color mapping lut name - {"default", "lines", "hot", "cool", "jet"}
-    * boundary -
+    * lut - color map. build-in or user defined.
+      - build-in map: {:default, :lines, :hot, :cool, :jet}
+      - user defined: list of color tupple, [{0,0,0},{10,8,9},{22,15,24}...].
+    * boundary - handling the pixel value outside the color map range.
+      - 0 - set to zero value.
+      - 1 - 
+      - 2 - repeat from the beginning of the color map.
+      - 3 - repeat while wrapping the color map.
+  
+  ## Examples
+  
+    ```Elixir
+    gray = CImg.load("sample.jpg") |> CImg.gray()
+    
+    jet = CImg.color_mapping(gray, :jet)
+    # heat-map coloring.
+
+    custom = CImg.color_mapping(gray, [{0,0,0},{10,8,9},{22,15,24}], 2)
+    # custom coloring.
+    ```
   """
-  def map(cimg, lut \\ "default", boundary \\ 0) do
-    with {:ok, h} <- NIF.cimg_map_color(cimg, lut, boundary),
+  def color_mapping(cimg, lut \\ :default, boundary \\ 0)
+
+  def color_mapping(cimg, lut, boundary) when lut in [:default, :line, :hot, :cool,:jet]  do
+    with {:ok, h} <- NIF.cimg_color_mapping(cimg, lut, boundary),
       do: %CImg{handle: h}
   end
+
+  def color_mapping(cimg, lut, boundary) when is_list(lut) do
+    with {:ok, h} <- NIF.cimg_color_mapping_by(cimg, lut, boundary),
+      do: %CImg{handle: h}
+  end
+
 
   @doc """
   [mut] Set the pixel value at (x, y).
@@ -562,7 +713,7 @@ defmodule CImg do
 
 
   @doc """
-  [mut] Thresholding the image.
+  Thresholding the image.
 
   ## Parameters
 
