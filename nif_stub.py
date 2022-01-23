@@ -37,6 +37,7 @@ class NifStub:
     def mk_niftbl(self, output):
         print('defmodule {module} do\n'
                '  @moduledoc false\n'
+               '  @compile {{:autoload, false}}\n'
                '\n'
                '  #loading NIF library\n'
                '  @on_load :load_nif\n'

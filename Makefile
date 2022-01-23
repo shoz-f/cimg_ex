@@ -17,8 +17,8 @@ PRIV		= $(MIX_APP_PATH)/priv
 BUILD		= $(MIX_APP_PATH)/obj
 
 # Build options
-CFLAGS		?= -O2 -Isrc $(addprefix -I, $(EXTRA_LIB)) -pedantic -fPIC
-LDFLAGS		?= -shared
+CFLAGS		+= -O2 -Isrc $(addprefix -I, $(EXTRA_LIB)) -pedantic -fPIC
+LDFLAGS		+= -shared
 ERL_CFLAGS	?= -I"$(ERL_EI_INCLUDE_DIR)"
 ERL_LDFLAGS	?= -L"$(ERL_EI_LIBDIR)"
 ifneq (,$(findstring MSYS_NT,$(HOSTOS)))
@@ -53,35 +53,37 @@ setup: $(PRIV) $(BUILD)
 build: $(NIFS)
 
 $(BUILD)/%.o: src/%.cc $(HDRS) Makefile
+	@echo "-CXX $(notdir $@)"
 	$(CXX) -c $(ERL_CFLAGS) $(CFLAGS) -o $@ $<
 
 $(NIFS): $(OBJS)
+	@echo "-LD $(notdir $@)"
 	$(CXX) $^ $(ERL_LDFLAGS) $(LDFLAGS) -o $@
 
 $(PRIV) $(BUILD):
 	mkdir -p $@
 
 clean:
-	$(RM) $(NIFS) $(BUILD)/*.o src/*.inc
+	$(RM) $(NIFS) $(BUILD)/*.o src/*.inc lib/cimg/$(NIF_NAME).ex
 
 .PHONY: all clean setup build
-
-define ex_path
-endef
 
 ################################################################################
 # Download 3rd-party libraries
 EXTRA_LIB	+= ./3rd_party/CImg
 ./3rd_party/CImg:
+	@echo "-DOWNLOAD $(notdir $@)"
 	mkdir -p $(dir $@)
-	wget http://cimg.eu/files/CImg_latest.zip
-	unzip CImg_latest.zip -d tmp
-	mv tmp/CImg* $@
-	rm CImg_latest.zip
-	rmdir tmp
+	#wget http://cimg.eu/files/CImg_latest.zip
+	#unzip CImg_latest.zip -d tmp
+	#mv tmp/CImg* $@
+	#rm CImg_latest.zip
+	#rmdir tmp
+	git clone https://github.com/dtschump/CImg.git $@
 
 EXTRA_LIB	+= ./3rd_party/stb
 ./3rd_party/stb:
+	@echo "-DOWNLOAD $(notdir $@)"
 	mkdir -p $(dir $@)
 	git clone https://github.com/nothings/stb.git $@
 
@@ -91,14 +93,20 @@ setup: $(EXTRA_LIB)
 # NIF name
 NIF_TABLE	+= src/cimg_nif.inc
 src/cimg_nif.inc: src/cimg_nif.h
+	@echo "-GENERATE $(notdir $@)"
 	python3 nif_tbl.py -o $@ --prefix cimg_ --ns NifCImgU8:: $<
 
 NIF_TABLE	+= src/cimgdisplay_nif.inc
 src/cimgdisplay_nif.inc: src/cimgdisplay_nif.h
+	@echo "-GENERATE $(notdir $@)"
 	python3 nif_tbl.py -o $@ --prefix cimgdisplay_ --ns NifCImgDisplay:: $<
 
 NIF_STUB	= lib/cimg/$(NIF_NAME).ex
 $(NIF_STUB): $(NIF_TABLE)
+	@echo "-GENERATE $(notdir $@)"
 	python3 nif_stub.py -o $@ CImg.NIF $^ src/cimgdisplay_nif.ext
 
 $(BUILD)/$(NIF_NAME).o: $(NIF_STUB)
+
+# Don't echo commands unless the caller exports "V=1"
+${V}.SILENT:
