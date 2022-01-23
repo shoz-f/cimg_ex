@@ -628,7 +628,7 @@ defmodule CImg do
   """
   def color_mapping(cimg, lut \\ :default, boundary \\ 0)
 
-  def color_mapping(cimg, lut, boundary) when lut in [:default, :line, :hot, :cool,:jet]  do
+  def color_mapping(cimg, lut, boundary) when lut in [:default, :lines, :hot, :cool,:jet]  do
     with {:ok, h} <- NIF.cimg_color_mapping(cimg, lut, boundary),
       do: %CImg{handle: h}
   end
