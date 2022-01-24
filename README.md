@@ -21,7 +21,9 @@ the image before performing the image processing.
 It has been confirmed to work in the following OS environment.
 
 - Windows MSYS2/MinGW64
-- WSL2/Ubuntu 20.04
+- WSL2/Ubuntu 20.04, 18.04
+- Linux Mint 20 "Ulyana"
+- Nerves rpi
 
 ## Requirements
 The following libraries are required to display images on the PC screen.
@@ -35,7 +37,7 @@ Add following dependency to your `mix.exs`.
 ```elixir
 def deps do
   [
-    {:cimg, "~> 0.1.4"}
+    {:cimg, "~> 0.1.8"}
   ]
 end
 ```
@@ -92,13 +94,13 @@ defmodule TflDemo.DeepLab3.Prediction do
     # preprocess
     bin =
       CImg.dup(img)
-      |> CImg.get_resize(@deeplab3_shape)
-      |> CImg.to_flat(range: {-1.0, 1.0})
+      |> CImg.resize(@deeplab3_shape)
+      |> CImg.to_binary(range: {-1.0, 1.0})
 
     # prediction
     outputs =
       __MODULE__
-      |> TflInterp.set_input_tensor(0, bin.data)
+      |> TflInterp.set_input_tensor(0, bin)
       |> TflInterp.invoke()
       |> TflInterp.get_output_tensor(0)
       |> Nx.from_binary({:f, 32}) |> Nx.reshape({257, 257, :auto})
@@ -108,8 +110,8 @@ defmodule TflDemo.DeepLab3.Prediction do
     |> Nx.argmax(axis: 2)
     |> Nx.as_type({:u, 8})
     |> Nx.to_binary()
-    |> CImg.create_from_bin(257, 257, 1, 1, "<u1")
-    |> CImg.map("lines")    # convert into a colormaped image
+    |> CImg.from_binary(257, 257, 1, 1, "<u1")
+    |> CImg.color_mapping(:lines)    # convert into a colormaped image
   end
 end
 ```

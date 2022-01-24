@@ -1,3 +1,17 @@
+# Release 0.1.8
+
+## Breaking Changes
+
+## Major Features and Improvements
+
+* supported Nerves/rpi.
+
+## Bug Fixes and Other Changes
+
+* corrected argument checking of `color_mapping/2`.
+
+* replace CImg download script with 'git clone'.
+
 # Release 0.1.7
 
 ## Breaking Changes
