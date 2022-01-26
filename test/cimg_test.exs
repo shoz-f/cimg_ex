@@ -16,8 +16,10 @@ defmodule CImgTest do
     img
     |> CImg.resize({416, 416})
     |> CImg.mirror(:y)
-    |> CImg.make_gray()
-    |> CImg.draw_box(0.2, 0.3, 0.4, 0.6, {255, 0, 0})
+    |> CImg.gray()
+    |> CImg.builder()
+    |> CImg.draw_rect(0.2, 0.3, 0.4, 0.6, {255, 0, 0})
+    |> CImg.runit()
     |> CImg.save("test/416x416.jpg")
   end
 end
