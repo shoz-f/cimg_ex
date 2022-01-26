@@ -458,7 +458,8 @@ defmodule CImg do
   ## Parameters
 
     * cimg - image object.
-    * {x, y} - resize width and height
+    * {x, y} - resize width and height or
+      scale  - resize scale
     * align - alignment mode
       - :none - fit resizing
       - :ul - fixed aspect resizing, upper-leftt alignment.
@@ -473,6 +474,11 @@ defmodule CImg do
     ```
   """
   def resize(img, size, align \\ :none, fill \\ 0)
+  def resize(%CImg{}=cimg, scale, align, fill) when is_float(scale) do
+    {x, y, _, _} = CImg.shape(cimg)
+    size = Enum.map([x,y], fn x -> round(scale*x) end) |> List.to_tuple
+    resize(cimg, size, align, fill)
+  end
   def resize(%CImg{}=cimg, {x, y}=_size, align, fill) do
     align = case align do
       :none -> 0
@@ -484,8 +490,8 @@ defmodule CImg do
     with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill),
       do: %CImg{handle: packed}
   end
-  defdelegate resize(builder, size, align, fill),
-    to: Builder
+#  defdelegate resize(builder, size, align, fill),
+#    to: Builder
 
 
   @doc """
@@ -578,11 +584,6 @@ defmodule CImg do
   def invert(cimg) do
     with {:ok, inv} <- NIF.cimg_get_invert(cimg),
       do: %CImg{handle: inv}
-  end
-
-  def get_yuv(cimg) do
-    with {:ok, yuv} <- NIF.cimg_get_yuv(cimg),
-      do: %CImg{handle: yuv}
   end
 
 
