@@ -6,6 +6,8 @@
 
 * supported Nerves/rpi.
 
+* `resize/4` accepts resize scale instead {x, y}.
+
 ## Bug Fixes and Other Changes
 
 * corrected argument checking of `color_mapping/2`.

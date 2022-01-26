@@ -4,7 +4,7 @@ defmodule Cimg.MixProject do
   def project do
     [
       app: :cimg,
-      version: "0.1.7",
+      version: "0.1.8",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       make_executable: "make",
@@ -29,8 +29,9 @@ defmodule Cimg.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:req, "~> 0.2.1"},
       {:elixir_make, "~> 0.6.2", runtime: false},
-      {:ex_doc, "~> 0.24", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
   end
 
