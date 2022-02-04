@@ -76,7 +76,6 @@ defmodule CImg do
 
   # Functions to build image processing sequence.
   defdelegate builder(img), to: Builder
-  defdelegate builder(x, y, z, c, val), to: Builder
   defdelegate runit(builder), to: Builder
 
 
@@ -560,10 +559,13 @@ defmodule CImg do
     # get inverted gray image
     ```
   """
-  def gray(cimg, opt_pn \\ 0) do
+  def gray(img, opt_pn \\ 0)
+  def gray(%CImg{}=cimg, opt_pn) do
     with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn),
       do: %CImg{handle: gray}
   end
+  defdelegate gray(builder, opt_pn),
+    to: Builder
 
   @doc """
   Get the inverted image of the image.

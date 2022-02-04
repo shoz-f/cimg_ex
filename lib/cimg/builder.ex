@@ -34,7 +34,7 @@ defmodule CImg.Builder do
   def builder(%Builder{}=builder) do
     builder
   end
-  def builder(cimg) do
+  def builder(%CImg{}=cimg) do
     dup = CImg.dup(cimg)
     %Builder{handle: dup.handle}
   end
@@ -56,12 +56,12 @@ defmodule CImg.Builder do
       |> CImg.draw_circle(100, 100, 30, {0, 255, 0})  # draw a circle on the duplicated img.
     ```
   """
-  def builder(x, y, z, c, val) do
+  def create(x, y, z, c, val) do
     with {:ok, h} <- NIF.cimg_create(x, y, z, c, val),
       do: %Builder{handle: h}
   end
 
-
+  
   @doc """
   Return %CImg{} converted from %Builder{}. Of course, mutable operations cannot
   be applied to %CImg{}.
@@ -80,21 +80,50 @@ defmodule CImg.Builder do
     # cimg is %CImg{} object with a circle drawn on it.
     ```
   """
-  def runit(%Builder{handle: h}) do
-    %CImg{handle: h}
+  def runit(%Builder{handle: h, script: script}) do
+    stack  = [%CImg{handle: h}]
+    script = Enum.reverse(script)
+
+    runit_loop(stack, script)
+  end
+
+  def runit_loop([top|stack], []) do
+    top
+  end
+  def runit_loop([top|stack], [cmd|script]) do
+    res = case cmd do
+      {:load, fname}               -> CImg.load(fname)
+      {:resize, x, y, align, fill} -> CImg.resize(top, {x, y}, align, fill)
+      {:gray, opt_pn}              -> CImg.gray(top, opt_pn)
+      _ -> nil
+    end
+    stack = [res|stack]
+    runit_loop(stack, script)
   end
   
-  def resize(%Builder{handle: img}=builder, {x, y}=_size, align, fill) do
-    align = case align do
-      :none -> 0
-      :ul   -> 1
-      :br   -> 2
-      _     -> raise(ArgumentError, "unknown align '#{align}'.")
-    end
+  def load(fname) do
+    %Builder{script: [{:load, fname}]}
+  end
 
-    [{:resize, x, y, align, fill} | builder.script]
-    
-    with {:ok, packed} <- NIF.cimg_get_resize(img, x, y, align, fill),
-      do: %CImg{handle: packed}
+
+  def resize(%Builder{}=builder, {x, y}=_size, align, fill) do
+#    align = case align do
+#      :none -> 0
+#      :ul   -> 1
+#      :br   -> 2
+#      _     -> raise(ArgumentError, "unknown align '#{align}'.")
+#    end
+
+    push_cmd(builder, {:resize, x, y, align, fill})
+  end
+
+  
+  def gray(%Builder{}=builder, opt_pn) do
+    push_cmd(builder, {:gray, opt_pn})
+  end
+  
+  
+  def push_cmd(%Builder{script: script}=builder, cmd) do
+    %{builder| script: [cmd|script]}
   end
 end
