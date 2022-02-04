@@ -490,8 +490,8 @@ defmodule CImg do
     with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill),
       do: %CImg{handle: packed}
   end
-#  defdelegate resize(builder, size, align, fill),
-#    to: Builder
+  defdelegate resize(builder, size, align, fill),
+    to: Builder
 
 
   @doc """
