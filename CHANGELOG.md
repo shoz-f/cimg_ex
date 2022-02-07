@@ -1,3 +1,15 @@
+# Release 0.1.9
+
+## Breaking Changes
+
+## Major Features and Improvements
+
+* add draw_text/8.
+
+* add Builder.from_binary/1, enable Builder.resize/4 (experimental)
+
+## Bug Fixes and Other Changes
+
 # Release 0.1.8
 
 ## Breaking Changes

@@ -19,7 +19,7 @@ defmodule CImg.Builder do
   
   ## Parameters
   
-    * image - %CImg{} or %Builder{} object. if %CImg{} is passed, `builder' duplicates
+    * image - %CImg{} or %Builder{} object. if %CImg{} is passed, `builder` duplicates
     the image object and returns it wrapped with %Builder{}.
   
   ## Examples
