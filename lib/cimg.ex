@@ -831,6 +831,7 @@ defmodule CImg do
         NIF.cimg_draw_rectangle(builder, x0, y0, x1, y1, color, opacity, pattern)
       Enum.all?([x0, y0, x1, y1], fn x -> 0.0 <= x and x <= 1.0 end) ->
         NIF.cimg_draw_ratio_rectangle(builder, x0, y0, x1, y1, color, opacity, pattern)
+      true -> builder
     end
   end
 

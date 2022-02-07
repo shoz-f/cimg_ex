@@ -61,6 +61,25 @@ defmodule CImg.Builder do
       do: %Builder{handle: h}
   end
 
+  @doc """
+  Create a %Builder{} from jpeg/png format binary.
+  You can create an image from loaded binary of the JPEG/PNG file.
+
+  ## Parameters
+
+    * jpeg_or_png - loaded binary of the image file.
+
+  ## Examples
+
+    ```Elixir
+    jpeg = File.read!("sample.jpg")
+    img = Builder.from_binary(jpeg)
+    ```
+  """
+  def from_binary(jpeg_or_png) do
+    with {:ok, h} <- NIF.cimg_load_from_memory(jpeg_or_png),
+      do: %Builder{handle: h}
+  end
 
   @doc """
   Return %CImg{} converted from %Builder{}. Of course, mutable operations cannot
@@ -84,7 +103,7 @@ defmodule CImg.Builder do
     %CImg{handle: h}
   end
   
-  def resize(%Builder{handle: img}=builder, {x, y}=_size, align, fill) do
+  def resize(%Builder{handle: h}=builder, {x, y}=_size, align, fill) do
     align = case align do
       :none -> 0
       :ul   -> 1
