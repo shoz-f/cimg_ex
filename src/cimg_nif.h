@@ -850,6 +850,32 @@ struct NifCImg {
 
     	return term[0];
     }
+    
+    static MUT DECL_NIF(draw_text)
+    {
+        CImgT* img;
+        int x, y;
+        std::string text;
+        const unsigned char *fg_color, *bg_color;
+        double opacity;
+        unsigned int font_height;
+
+        if (ality != 8
+        ||  !enif_get_image(env, term[0], &img)
+        ||  !enif_get_int(env, term[1], &x)
+        ||  !enif_get_int(env, term[2], &y)
+        ||  !enif_get_str(env, term[3], &text)
+        ||  !enif_get_color_name(env, term[4], &fg_color)
+        ||  !enif_get_color_name(env, term[5], &bg_color)
+        ||  !enif_get_double(env, term[6], &opacity)
+        ||  !enif_get_uint(env, term[7], &font_height)) {
+            return enif_make_badarg(env);
+        }
+
+        img->draw_text(x, y, text.c_str(), fg_color, bg_color, opacity, font_height);
+
+    	return term[0];
+    }
 
     static DECL_NIF(color_mapping) {
         CImgT* img;

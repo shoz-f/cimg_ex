@@ -882,6 +882,28 @@ defmodule CImg do
   	NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity, pattern)
   end
 
+  @doc """
+  [mut] Draw text in th image.
+  
+  ## Parameters
+  
+    * x,y - position on the image where the text will begin to be drawn.
+    * text - the text to be drawn.
+    * fg_color - foreground color. choose one of the following:
+            :white,:sliver,:gray,:black,:red,:maroon,:yellow,:olive,:lime,:green,:aqua,:teal,:blue,:navy,:fuchsia,:purple,:transparent
+    * bg_color - background color.
+    * opacity - opacity: 0.0..1.0.
+    * font_height - font height in pixels.
+
+  ## Examples
+  
+    ```Elixir
+    res = CImg.draw_text(builder, 10, 20, "Hello world!", :white, :transparent, 1.0, 32)
+    ```
+  """
+  def draw_text(%Builder{}=builder, x, y, text, font_height, fg_color, bg_color \\ :transparent, opacity \\ 1.0) do
+    NIF.cimg_draw_text(builder, x, y, text, fg_color, bg_color, opacity, font_height)
+  end
 
   @doc """
   Display the image on the CImgDisplay object.

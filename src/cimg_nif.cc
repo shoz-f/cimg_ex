@@ -95,6 +95,92 @@ int enif_get_color(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char color[])
 	return true;
 }
 
+const unsigned char COLOR_CODE16[][3] = {
+    { 255, 255, 255 },
+    { 192, 192, 192 },
+    { 128, 128, 128 },
+    {   0,   0,   0 },
+    { 255,   0,   0 },
+    { 128,   0,   0 },
+    { 255, 255,   0 },
+    { 128, 128,   0 },
+    {   0, 255,   0 },
+    {   0, 128,   0 },
+    {   0, 255, 255 },
+    {   0, 128, 128 },
+    {   0,   0, 255 },
+    {   0,   0, 128 },
+    { 255,   0, 255 },
+    { 128,   0, 128 },
+};
+
+int enif_get_color_name(ErlNifEnv* env, ERL_NIF_TERM term, const unsigned char** color)
+{
+    char color_name[16];
+    int len;
+    
+    if ((len = enif_get_atom(env, term, color_name, sizeof(color_name), ERL_NIF_LATIN1)) == 0) {
+        return false;
+    }
+
+    if (std::strcmp(color_name, "white") == 0) {
+        *color = COLOR_CODE16[ 0];
+    }
+    else if (std::strcmp(color_name, "silver") == 0) {
+        *color = COLOR_CODE16[ 1];
+    }
+    else if (std::strcmp(color_name, "gray") == 0) {
+        *color = COLOR_CODE16[ 2];
+    }
+    else if (std::strcmp(color_name, "black") == 0) {
+        *color = COLOR_CODE16[ 3];
+    }
+    else if (std::strcmp(color_name, "red") == 0) {
+        *color = COLOR_CODE16[ 4];
+    }
+    else if (std::strcmp(color_name, "maroon") == 0) {
+        *color = COLOR_CODE16[ 5];
+    }
+    else if (std::strcmp(color_name, "yellow") == 0) {
+        *color = COLOR_CODE16[ 6];
+    }
+    else if (std::strcmp(color_name, "olive") == 0) {
+        *color = COLOR_CODE16[ 7];
+    }
+    else if (std::strcmp(color_name, "lime") == 0) {
+        *color = COLOR_CODE16[ 8];
+    }
+    else if (std::strcmp(color_name, "green") == 0) {
+        *color = COLOR_CODE16[ 9];
+    }
+    else if (std::strcmp(color_name, "aqua") == 0) {
+        *color = COLOR_CODE16[10];
+    }
+    else if (std::strcmp(color_name, "teal") == 0) {
+        *color = COLOR_CODE16[11];
+    }
+    else if (std::strcmp(color_name, "blue") == 0) {
+        *color = COLOR_CODE16[12];
+    }
+    else if (std::strcmp(color_name, "navy") == 0) {
+        *color = COLOR_CODE16[13];
+    }
+    else if (std::strcmp(color_name, "fuchsia") == 0) {
+        *color = COLOR_CODE16[14];
+    }
+    else if (std::strcmp(color_name, "purple") == 0) {
+        *color = COLOR_CODE16[15];
+    }
+    else if (std::strcmp(color_name, "transparent") == 0) {
+        *color = 0;
+    }
+    else {
+        return false;
+    }
+
+    return true;
+}
+
 /**************************************************************************}}}*/
 /* CImg helper: enif get 3D position (vector)                                 */
 /**************************************************************************{{{*/
