@@ -113,7 +113,7 @@ defmodule CImg.Builder do
 
     #[{:resize, x, y, align, fill} | builder.script]
     
-    with {:ok, packed} <- NIF.cimg_get_resize(%CImg{handle: img}, x, y, align, fill),
+    with {:ok, packed} <- NIF.cimg_get_resize(%CImg{handle: h}, x, y, align, fill),
       do: %Builder{handle: packed}
   end
 end
