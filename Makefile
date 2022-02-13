@@ -21,7 +21,11 @@ CFLAGS		+= -O2 -Isrc $(addprefix -I, $(EXTRA_LIB)) -pedantic -fPIC
 LDFLAGS		+= -shared
 ERL_CFLAGS	?= -I"$(ERL_EI_INCLUDE_DIR)"
 ERL_LDFLAGS	?= -L"$(ERL_EI_LIBDIR)"
-ifneq (,$(findstring MSYS_NT,$(HOSTOS)))
+ifneq (,$(CROSSCOMPILE))
+    NIFS = $(PRIV)/$(NIF_NAME).so
+    LDFLAGS += -lm -lpthread
+    CFLAGS  += -Dcimg_display=0
+else ifneq (,$(findstring MSYS_NT,$(HOSTOS)))
     NIFS = $(PRIV)/$(NIF_NAME).dll
     ifneq (,$(findstring $(MIX_ENV), dev test))
         LDFLAGS += -lgdi32
