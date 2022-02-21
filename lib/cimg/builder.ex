@@ -11,7 +11,11 @@ defmodule CImg.Builder do
   #   :handle - work image.
   #   :src    - source image.
   #   :script - image operations
-  defstruct handle: nil, src: nil, script: []
+  defstruct handle: nil, script: []
+
+  def push_cmd(%Builder{script: script}=builder, cmd) do
+    %{builder| script: [cmd|script]}
+  end
 
   @doc """
   Building image processing sequence. It allows to execute mutable operation in
@@ -31,6 +35,9 @@ defmodule CImg.Builder do
       |> CImg.draw_circle(100, 100, 30, {0, 255, 0})  # draw a circle on the duplicated img.
     ```
   """
+  def builder() do
+    %Builder{}
+  end
   def builder(%Builder{}=builder) do
     builder
   end
@@ -87,14 +94,28 @@ defmodule CImg.Builder do
     runit_loop(stack, script)
   end
 
+  def apply(%Builder{script: script}, %CImg{}=cimg) do
+    stack = [CImg.dup(cimg)]
+    script = Enum.reverse(script)
+    
+    runit_loop(stack, script)
+  end
+
   def runit_loop([top|stack], []) do
     top
   end
   def runit_loop([top|stack], [cmd|script]) do
     res = case cmd do
-      {:load, fname}               -> CImg.load(fname)
-      {:resize, x, y, align, fill} -> CImg.resize(top, {x, y}, align, fill)
-      {:gray, opt_pn}              -> CImg.gray(top, opt_pn)
+      {:load, fname}               ->
+        CImg.load(fname)
+      {:resize, x, y, align, fill} ->
+        CImg.resize(top, {x, y}, align, fill)
+      {:gray, opt_pn}              ->
+        with {:ok, gray} <- NIF.cimg_get_gray(top, opt_pn), do: %CImg{handle: gray}
+      {:draw_circle, x0, y0, radius, color, opacity} ->
+        NIF.cimg_draw_circle_filled(top, x0, y0, radius, color, opacity)
+      {:draw_circle, x0, y0, radius, color, opacity, pattern} ->
+        NIF.cimg_draw_circle(top, x0, y0, radius, color, opacity, pattern)
       _ -> nil
     end
     stack = [res|stack]
@@ -106,14 +127,7 @@ defmodule CImg.Builder do
   end
 
 
-  def resize(%Builder{}=builder, {x, y}=_size, align, fill) do
-#    align = case align do
-#      :none -> 0
-#      :ul   -> 1
-#      :br   -> 2
-#      _     -> raise(ArgumentError, "unknown align '#{align}'.")
-#    end
-
+  def resize(%Builder{}=builder, {x, y}=_size, align \\ :none, fill \\ 0) do
     push_cmd(builder, {:resize, x, y, align, fill})
   end
 
@@ -121,9 +135,12 @@ defmodule CImg.Builder do
   def gray(%Builder{}=builder, opt_pn) do
     push_cmd(builder, {:gray, opt_pn})
   end
+
+  def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0) do
+    push_cmd(builder, {:draw_circle, x0, y0, radius, color, opacity})
+  end
   
-  
-  def push_cmd(%Builder{script: script}=builder, cmd) do
-    %{builder| script: [cmd|script]}
+  def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity, pattern) do
+    push_cmd(builder, {:draw_circle, x0, y0, radius, color, opacity, pattern})
   end
 end

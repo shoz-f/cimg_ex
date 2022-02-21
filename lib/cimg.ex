@@ -94,8 +94,7 @@ defmodule CImg do
     ```
   """
   def create(x, y, z, c, val) when is_integer(val) do
-    with {:ok, h} <- NIF.cimg_create(x, y, z, c, val),
-      do: %CImg{handle: h}
+    with {:ok, h} <- NIF.cimg_create(x, y, z, c, val), do: %CImg{handle: h}
   end
 
 
@@ -225,8 +224,13 @@ defmodule CImg do
     CImg.save(img, "sample.jpg")
     ```
   """
-  defdelegate save(cimg, fname),
-    to: NIF, as: :cimg_save
+  def save(%Builder{}=builder, fname) do
+    Builder.runit(builder)
+    |> save(fname)
+  end
+  def save(%CImg{}=cimg, fname), do: NIF.cimg_save(cimg, fname)
+#  defdelegate save(cimg, fname),
+#    to: NIF, as: :cimg_save
 
 
   @doc """
@@ -485,12 +489,10 @@ defmodule CImg do
       :br   -> 2
       _     -> raise(ArgumentError, "unknown align '#{align}'.")
     end
-
-    with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill),
-      do: %CImg{handle: packed}
+    with {:ok, packed} <- NIF.cimg_get_resize(cimg, x, y, align, fill), do: %CImg{handle: packed}
   end
-#  defdelegate resize(builder, size, align, fill),
-#    to: Builder
+  defdelegate resize(builder, size, align, fill),
+    to: Builder
 
 
   @doc """
@@ -567,8 +569,7 @@ defmodule CImg do
   """
   def gray(img, opt_pn \\ 0)
   def gray(%CImg{}=cimg, opt_pn) do
-    with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn),
-      do: %CImg{handle: gray}
+    with {:ok, gray} <- NIF.cimg_get_gray(cimg, opt_pn), do: %CImg{handle: gray}
   end
   defdelegate gray(builder, opt_pn),
     to: Builder
@@ -856,9 +857,9 @@ defmodule CImg do
   """
   def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0) do
     # mutable operation.
-    NIF.cimg_draw_circle_filled(builder, x0, y0, radius, color, opacity)
+    #NIF.cimg_draw_circle_filled(builder, x0, y0, radius, color, opacity)
+     Builder.draw_circle(builder, x0, y0, radius, color, opacity)
   end
-
 
   @doc """
   [mut] Draw circle in the image.
@@ -880,7 +881,8 @@ defmodule CImg do
   """
   def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity, pattern) do
     # mutable operation.
-  	NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity, pattern)
+  	#NIF.cimg_draw_circle(builder, x0, y0, radius, color, opacity, pattern)
+  	Builder.draw_circle(builder, x0, y0, radius, color, opacity, pattern)
   end
 
 
@@ -901,4 +903,8 @@ defmodule CImg do
   """
   defdelegate display(cimg, disp),
     to: NIF, as: :cimg_display
+    
+  def test() do
+    %{__struct__: Kino.Image, content: "", mime_type: "image/jpeg"}
+  end
 end

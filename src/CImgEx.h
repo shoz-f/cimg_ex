@@ -229,7 +229,7 @@ enum {
 };
 
 // create the GRAY image
-CImg<T> getGRAY(int optPN=cPOSI)
+CImg<T> getRGBtoGRAY(int optPN=cPOSI)
 {
     if (_spectrum != 3) {
         throw CImgInstanceException(_cimg_instance
@@ -248,6 +248,11 @@ CImg<T> getGRAY(int optPN=cPOSI)
         }
     }
     return res;
+}
+
+CImg<T> RGBtoGRAY(int optPN=cPOSI)
+{
+    return assign(getRGBtoGRAY(cPOSI));
 }
 
 #endif

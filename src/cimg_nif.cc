@@ -10,8 +10,6 @@
 **/
 /**************************************************************************{{{*/
 
-#include <stdio.h>
-
 #include "CImgEx.h"
 using namespace cimg_library;
 
@@ -23,50 +21,6 @@ using namespace cimg_library;
 **/
 /**************************************************************************{{{*/
 #include "my_erl_nif.h"
-
-/**************************************************************************}}}*/
-/* Helper: enif get & make value override functions                           */
-/**************************************************************************{{{*/
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char* value)
-{
-    unsigned int temp;
-    int res = enif_get_uint(env, term, &temp);
-    *value = temp;
-    return res;
-}
-
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, int* value)
-{
-    return enif_get_int(env, term, value);
-}
-
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, float* value)
-{
-    double temp;
-    int res = enif_get_double(env, term, &temp);
-    *value = temp;
-    return res;
-}
-
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, double* value)
-{
-    return enif_get_double(env, term, value);
-}
-
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, unsigned char value)
-{
-    return enif_make_uint(env, value);
-}
-
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, int value)
-{
-    return enif_make_int(env, value);
-}
-
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, double value)
-{
-    return enif_make_double(env, value);
-}
 
 /**************************************************************************}}}*/
 /* CImg helper: enif get color value                                          */
