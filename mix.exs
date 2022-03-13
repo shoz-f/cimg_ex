@@ -4,7 +4,7 @@ defmodule Cimg.MixProject do
   def project do
     [
       app: :cimg,
-      version: "0.1.9",
+      version: "0.1.10",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       make_executable: "make",
@@ -14,8 +14,12 @@ defmodule Cimg.MixProject do
       
       description: description(),
       package: package(),
-      #name: "cimg",
-      source_url: "https://github.com/shoz-f/cimg_ex.git"
+
+      # Docs
+      # name: "CImg",
+      source_url: "https://github.com/shoz-f/cimg_ex.git",
+ 
+      docs: docs()
     ]
   end
 
@@ -29,7 +33,6 @@ defmodule Cimg.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:req, "~> 0.2.1"},
       {:elixir_make, "~> 0.6.2", runtime: false},
       {:ex_doc, "~> 0.24", only: :dev, runtime: false}
     ]
@@ -45,6 +48,20 @@ defmodule Cimg.MixProject do
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/shoz-f/cimg_ex.git"},
       files: ~w(lib mix.exs README* CHANGELOG* LICENSE* Makefile nif_*.py src)
+    ]
+  end
+
+  defp docs do
+    [
+      main: "readme",
+      extras: [
+        "README.md",
+#        "LICENSE",
+        "CHANGELOG.md"
+      ],
+#      source_ref: "v#{@version}",
+#      source_url: @source_url,
+#      skip_undefined_reference_warnings_on: ["CHANGELOG.md"]
     ]
   end
 end

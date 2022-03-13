@@ -11,12 +11,10 @@
 /**************************************************************************{{{*/
 
 namespace NifCImgDisplay {
-
     /**********************************************************************}}}*/
     /* Resource handling                                                      */
     /**********************************************************************{{{*/
-    void init_resource_type(ErlNifEnv* env, const char* name)
-    {
+    void init_resource_type(ErlNifEnv* env, const char* name) {
         Resource<CImgDisplay>::init_resource_type(env, name);
     }
 
@@ -29,16 +27,18 @@ namespace NifCImgDisplay {
                 && Resource<CImgDisplay>::get_item(env, handle, img);
     }
 
-    template <class T>
-    _DECL_NIF(create) {
-        typename T::CImgT* img;
+    /**********************************************************************}}}*/
+    /* APIs                                                                   */
+    /**********************************************************************{{{*/
+    DECL_NIF(create) {
+    	NifCImgU8::CImgT * img;
         ErlNifBinary bin;
         unsigned int normalization;
         bool is_fullscreen;
         bool is_closed;
 
         if (ality != 5
-        ||  !T::enif_get_image(env, term[0], &img)
+        ||  !NifCImgU8::enif_get_image(env, term[0], &img)
         ||  !enif_inspect_binary(env, term[1], &bin)
         ||  !enif_get_uint(env, term[2], &normalization)
         ||  !enif_get_bool(env, term[3], &is_fullscreen)

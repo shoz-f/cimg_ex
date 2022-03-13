@@ -1,66 +1,50 @@
-# Release 0.1.9
+# Changelog
 
-## Breaking Changes
+## Release 0.1.10
 
-## Major Features and Improvements
+  * Breaking Changes
+    * remove deprecated functions. see `Release 0.1.7` changelog.
 
-* add draw_text/8.
+  * Major Features and Improvements
+    * add session execution mode.
 
-* add Builder.from_binary/1, enable Builder.resize/4 (experimental)
+  * Bug Fixes and Other Changes
+    * fixed a bug that did not release image resources.
 
-## Bug Fixes and Other Changes
+## Release 0.1.9
 
-# Release 0.1.8
+  * Major Features and Improvements
+    * add draw_text/8.
+    * add Builder.from_binary/1, enable Builder.resize/4 (experimental)
 
-## Breaking Changes
+## Release 0.1.8
 
-## Major Features and Improvements
+  * Major Features and Improvements
+    * supported Nerves/rpi.
+    * `resize/4` accepts resize scale instead {x, y}.
 
-* supported Nerves/rpi.
+  * Bug Fixes and Other Changes
+    * corrected argument checking of `color_mapping/2`.
+    * replace CImg download script with 'git clone'.
 
-* `resize/4` accepts resize scale instead {x, y}.
+## Release 0.1.7
 
-## Bug Fixes and Other Changes
+  * Breaking Changes
+    * deprecated: `to_jpeg/1`, `to_png/1`, `to_flat/2`. Use `to_binary/2` instead.
+    * deprecated: `create_from_bin/6`. Use `from_binary/6` instead.
+    * deprecated: `load_from_memory/1`. Use `from_binary/1` instead.
 
-* corrected argument checking of `color_mapping/2`.
+  * Major Features and Improvements
+    * add integrated converter from a image to a binary: `to_binary/2`.
+    * add color mapping: `color_mapping/2`.
+    * rename `create_from_bin/6` to `from_binary/6`.
+    * rename `load_from_memory/1` to `from_binary/1`.
+    * `to_npy/2` takes various conversion modes as optional parameters.
 
-* replace CImg download script with 'git clone'.
+  * Bug Fixes and Other Changes
+    * correct an axis order of shape in `from_npy/1`, `to_npy/2`.
 
-# Release 0.1.7
+## Release 0.1.6 (Jan 06 2022)
 
-## Breaking Changes
-
-* deprecated: `to_jpeg/1`, `to_png/1`, `to_flat/2`.<br>
-  Use `to_binary/2` instead.
-
-* deprecated: `create_from_bin/6`.<br>
-  Use `from_binary/6` instead.
-
-* deprecated: `load_from_memory/1`.<br>
-  Use `from_binary/1` instead.
-
-## Major Features and Improvements
-
-* add integrated converter from a image to a binary: `to_binary/2`.
-
-* add color mapping: `color_mapping/2`.
-
-* rename `create_from_bin/6` to `from_binary/6`.
-
-* rename `load_from_memory/1` to `from_binary/1`.
-
-* `to_npy/2` takes various conversion modes as optional parameters.
-
-## Bug Fixes and Other Changes
-
-* correct an axis order of shape in `from_npy/1`, `to_npy/2`.
-
-# Release 0.1.6(Jan 06 2022)
-
-## Breaking Changes
-
-## Major Features and Improvements
-
-* add image convertor `to_jpeg/1`, `to_png/1` (experimental)
-
-## Bug Fixes and Other Changes
+  * Major Features and Improvements
+    * add image convertor `to_jpeg/1`, `to_png/1` (experimental)
