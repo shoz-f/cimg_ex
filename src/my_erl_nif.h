@@ -1,3 +1,7 @@
+#ifndef _MY_ERL_NIF_H
+#define _MY_ERL_NIF_H
+
+#include <stdio.h>
 #include <erl_nif.h>
 #include <string>
 
@@ -15,7 +19,7 @@
 * @return NIF term
 **/
 /**************************************************************************{{{*/
-ERL_NIF_TERM enif_make_atom_ex(ErlNifEnv* env, const char* name)
+inline ERL_NIF_TERM enif_make_atom_ex(ErlNifEnv* env, const char* name)
 {
     ERL_NIF_TERM res;
     if (enif_make_existing_atom(env, name, &res, ERL_NIF_LATIN1)) {
@@ -39,7 +43,7 @@ ERL_NIF_TERM enif_make_atom_ex(ErlNifEnv* env, const char* name)
 * @return succeed or fail
 **/
 /**************************************************************************{{{*/
-int enif_get_bool(ErlNifEnv* env, ERL_NIF_TERM term, bool* cond)
+inline int enif_get_bool(ErlNifEnv* env, ERL_NIF_TERM term, bool* cond)
 {
     char atom[256];
     int  len;
@@ -61,7 +65,7 @@ int enif_get_bool(ErlNifEnv* env, ERL_NIF_TERM term, bool* cond)
 * @return succeed or fail
 **/
 /**************************************************************************{{{*/
-int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
+inline int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
 {
     int ival;
     if (enif_get_int(env, term, &ival)) {
@@ -81,7 +85,7 @@ int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, double* val)
 * @return succeed or fail
 **/
 /**************************************************************************{{{*/
-int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, int* val)
+inline int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, int* val)
 {
     double fval;
     if (enif_get_double(env, term, &fval)) {
@@ -101,7 +105,7 @@ int enif_get_number(ErlNifEnv* env, ERL_NIF_TERM term, int* val)
 * @return succeed or fail
 **/
 /**************************************************************************{{{*/
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char* value)
+inline int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char* value)
 {
     unsigned int temp;
     int res = enif_get_uint(env, term, &temp);
@@ -109,12 +113,12 @@ int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char* value)
     return res;
 }
 
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, int* value)
+inline int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, int* value)
 {
     return enif_get_int(env, term, value);
 }
 
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, float* value)
+inline int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, float* value)
 {
     double temp;
     int res = enif_get_double(env, term, &temp);
@@ -122,22 +126,22 @@ int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, float* value)
     return res;
 }
 
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, double* value)
+inline int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, double* value)
 {
     return enif_get_double(env, term, value);
 }
 
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, unsigned char value)
+inline ERL_NIF_TERM enif_make_value(ErlNifEnv* env, unsigned char value)
 {
     return enif_make_uint(env, value);
 }
 
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, int value)
+inline ERL_NIF_TERM enif_make_value(ErlNifEnv* env, int value)
 {
     return enif_make_int(env, value);
 }
 
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, double value)
+inline ERL_NIF_TERM enif_make_value(ErlNifEnv* env, double value)
 {
     return enif_make_double(env, value);
 }
@@ -151,7 +155,7 @@ ERL_NIF_TERM enif_make_value(ErlNifEnv* env, double value)
 * @return succeed or fail
 **/
 /**************************************************************************{{{*/
-int enif_get_str(ErlNifEnv* env, ERL_NIF_TERM term, std::string* str)
+inline int enif_get_str(ErlNifEnv* env, ERL_NIF_TERM term, std::string* str)
 {
     ErlNifBinary bin;
     if (!enif_inspect_binary(env, term, &bin)) {
@@ -188,7 +192,7 @@ struct Resource {
     static void destroy(ErlNifEnv* env, void* ptr)
     {
         Resource<T>* res = reinterpret_cast<Resource<T>*>(ptr);
-        if (!res->m_item) {
+        if (res->m_item != nullptr) {
             delete res->m_item;
         }
     }
@@ -196,7 +200,7 @@ struct Resource {
     static ERL_NIF_TERM make_resource(ErlNifEnv* env, T* item)
     {
         Resource<T>* res = new(enif_alloc_resource(_ResType, sizeof(Resource<T>))) Resource<T>;
-        if (!res) {
+        if (res == nullptr) {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Faild to allocate resource", ERL_NIF_LATIN1));
         }
         res->m_item = item;
@@ -210,7 +214,7 @@ struct Resource {
     static ERL_NIF_TERM make_resource(ErlNifEnv* env, T* item, ERL_NIF_TERM opts)
     {
         Resource<T>* res = new(enif_alloc_resource(_ResType, sizeof(Resource<T>))) Resource<T>;
-        if (!res) {
+        if (res == nullptr) {
             return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Faild to allocate resource", ERL_NIF_LATIN1));
         }
         res->m_item = item;
@@ -239,4 +243,5 @@ struct Resource {
 template <class T>
 ErlNifResourceType* Resource<T>::_ResType = NULL;
 
+#endif
 /*** end of my_erl_nif.h **************************************************}}}*/
