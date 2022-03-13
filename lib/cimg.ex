@@ -1130,22 +1130,29 @@ defmodule CImg do
   end
 
   @doc """
-  Display the image on the CImgDisplay object.
+  {crop} Display the image on the Livebook.
 
   ## Parameters
 
-    * cimg - image object.
-    * display - CImgDisplay object
+    * img - %CImg{} or %Builder{}
+    * mime_type - image file format: `:jpeg`, `:png`
 
   ## Examples
 
-    ```Elixir
-    disp = CImgDisplay.create(img, "Sample")
-    CImg.display(cimg, disp)
+    ```elixir
+    CImg.builder(:file, "sample.jpg")
+    |> CImg.display_kino(:jpeg)
     ```
   """
-  def display_kino() do
-    %{__struct__: Kino.Image, content: "", mime_type: "image/jpeg"}
+  def display_kino(%CImg{}=img, mime_type) do
+    builder(img) |> display_kino(mime_type)
   end
 
+  def display_kino(%Builder{}=builder, mime_type) when mime_type in [:jpeg, :png] do
+    %{
+      __struct__: Kino.Image,
+      content: to_binary(builder, mime_type),
+      mime_type: "image/#{Atom.to_string(mime_type)}"
+    }
+  end
 end
