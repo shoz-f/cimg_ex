@@ -1051,6 +1051,33 @@ defmodule CImg do
 
 
   @doc """
+  {grow} Draw text in th image.
+  
+  ## Parameters
+  
+    * builder - %Builder{}
+    * x,y - position on the image where the text will begin to be drawn.
+    * text - the text to be drawn.
+    * font_height - font height in pixels.
+    * fg_color - foreground color. choose one of the following:
+            :white,:sliver,:gray,:black,:red,:maroon,:yellow,:olive,
+            :lime,:green,:aqua,:teal,:blue,:navy,:fuchsia,:purple,
+            :transparent
+    * bg_color - background color.
+    * opacity - opacity: 0.0..1.0.
+
+  ## Examples
+  
+    ```elixir
+    result = CImg.draw_text(builder, 10, 20, "Hello world!", 32, :white)
+    ```
+  """
+  def draw_text(%Builder{}=builder, x, y, text, font_height, fg_color, bg_color \\ :transparent, opacity \\ 1.0) do
+    push_cmd(builder, {:draw_text, x, y, text, fg_color, bg_color, opacity, font_height})
+  end
+
+
+  @doc """
   {crop} Display the image on the CImgDisplay object.
 
   ## Parameters
@@ -1100,29 +1127,6 @@ defmodule CImg do
   def display(%Builder{seed: seed, script: script}, disp) when not is_nil(seed) do
     script = [{:display_on, disp} | script]
     NIF.cimg_run([seed | Enum.reverse(script)])
-  end
-
-  @doc """
-  [mut] Draw text in th image.
-  
-  ## Parameters
-  
-    * x,y - position on the image where the text will begin to be drawn.
-    * text - the text to be drawn.
-    * fg_color - foreground color. choose one of the following:
-            :white,:sliver,:gray,:black,:red,:maroon,:yellow,:olive,:lime,:green,:aqua,:teal,:blue,:navy,:fuchsia,:purple,:transparent
-    * bg_color - background color.
-    * opacity - opacity: 0.0..1.0.
-    * font_height - font height in pixels.
-
-  ## Examples
-  
-    ```Elixir
-    res = CImg.draw_text(builder, 10, 20, "Hello world!", :white, :transparent, 1.0, 32)
-    ```
-  """
-  def draw_text(%Builder{}=builder, x, y, text, font_height, fg_color, bg_color \\ :transparent, opacity \\ 1.0) do
-    NIF.cimg_draw_text(builder, x, y, text, fg_color, bg_color, opacity, font_height)
   end
 
   @doc """

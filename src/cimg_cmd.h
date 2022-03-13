@@ -619,6 +619,30 @@ namespace NifCImgU8 {
         return CIMG_GROW;
     }
 
+    CIMG_CMD(draw_text) {
+        int x, y;
+        std::string text;
+        const unsigned char *fg_color, *bg_color;
+        double opacity;
+        unsigned int font_height;
+
+        if (argc != 7
+        ||  !enif_get_int(env, argv[0], &x)
+        ||  !enif_get_int(env, argv[1], &y)
+        ||  !enif_get_str(env, argv[2], &text)
+        ||  !enif_get_color_name(env, argv[3], &fg_color)
+        ||  !enif_get_color_name(env, argv[4], &bg_color)
+        ||  !enif_get_double(env, argv[5], &opacity)
+        ||  !enif_get_uint(env, argv[6], &font_height)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        img.draw_text(x, y, text.c_str(), fg_color, bg_color, opacity, font_height);
+
+    	return CIMG_GROW;
+    }
+
     /**********************************************************************}}}*/
     /* CROP: CImg output command implementation                               */
     /**********************************************************************{{{*/

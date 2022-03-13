@@ -4,6 +4,7 @@
 
   * Breaking Changes
     * remove deprecated functions. see `Release 0.1.7` changelog.
+    * remove Builder.from_binary/1, Builder.resize/4. replaced by session.
 
   * Major Features and Improvements
     * add session execution mode.
