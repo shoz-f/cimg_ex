@@ -7,29 +7,28 @@ defmodule CImgDemo do
 
   def bounce_lens(select \\ 1) do
     image  = CImg.load("lena.jpg")
-    screen = CImg.create(512, 512, 1, 3, 0)
     disp   = CImgDisplay.create(image, "Click a point")
 
     fisheye = if select == 1 do
-      &fisheye/3
+      &fisheye/2
     else
-      fn res, img, cnt -> fisheye(res, img, cnt, fishlens(30)) end
+      fn res, cnt -> fisheye(res, cnt, fishlens(30)) end
     end
 
-    loop_bounce(0.0, disp, screen, image, fisheye)
+    loop_bounce(0.0, disp, image, fisheye)
   end
 
-  def loop_bounce(alpha, disp, screen, img, fisheye) do
+  def loop_bounce(alpha, disp, img, fisheye) do
     case CImgDisplay.is_closed(disp) do
       true  -> :ok
       false ->
         {w,h,_,_} = CImg.shape(img)
 
         CImg.builder(img)
-        |> fisheye.(img, lissajous(alpha, w, h))
+        |> fisheye.(lissajous(alpha, w, h))
         |> CImg.display(disp)
 
-        loop_bounce(alpha+0.02, disp, screen, img, fisheye)
+        loop_bounce(alpha+0.02, disp, img, fisheye)
     end
   end
 
@@ -37,21 +36,21 @@ defmodule CImgDemo do
     [
       w * (1.0 + 0.9*:math.cos(1.2*alpha))/2.0,
       h * (1.0 + 0.8*:math.sin(3.4*alpha))/2.0,
-      #90.0 + 60.0*:math.sin(alpha)
+#      90.0 + 60.0*:math.sin(alpha)
       90.0
     ] |> Enum.map(&trunc/1)
   end
 
-  def fisheye(%Builder{}=screen, img, [xc, yc, r]) do
+  def fisheye(%Builder{}=screen, [xc, yc, r]) do
     screen
-    |> CImg.transfer(img, fishlens(r), xc, yc)
+    |> CImg.draw_morph(fishlens(r), xc, yc)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 0.3)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 1.0, 0xFFFFFFFF)
   end
 
-  def fisheye(%Builder{}=screen, img, [xc, yc, r], lens) do
+  def fisheye(%Builder{}=screen, [xc, yc, r], lens) do
     screen
-    |> CImg.transfer(img, lens, xc, yc)
+    |> CImg.draw_morph(lens, xc, yc)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 0.3)
     |> CImg.draw_circle(xc, yc, r, {255,0,255}, 1.0, 0xFFFFFFFF)
   end
@@ -69,9 +68,9 @@ defmodule CImgDemo do
     blue  = {0, 0, 255}
 
     image  = CImg.load("lena.jpg") |> CImg.blur(2.5)
-    screen = CImg.builder(500, 400, 1, 3, 0)
+    screen = CImg.create(500, 400, 1, 3, 0)
     
-    main_disp = CImgDisplay.create(image, "Click a point")
+    main_disp = CImgDisplay.create(image,  "Click a point")
     draw_disp = CImgDisplay.create(screen, "Intensity profile")
 
     {width,_,_,_} = CImg.shape(image)
@@ -79,9 +78,8 @@ defmodule CImgDemo do
     CImgDisplay.wait(main_disp)
 
     loop_profile(main_disp, fn y ->
-      screen
-        |> CImg.fill(0)
-        |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 0, width-1, y, 0, 0), red,   1, 1, 0, 255, 0)
+      CImg.builder(screen)
+        |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 0, width-1, y, 0, 0), red,   1.0, 1, 0, 255.0, 0.0)
         |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 1, width-1, y, 0, 1), green, 1.0, 1, 0, 255.0, 0.0)
         |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 2, width-1, y, 0, 2), blue,  1.0, 1, 0, 255.0, 0.0)
         |> CImg.display(draw_disp)
