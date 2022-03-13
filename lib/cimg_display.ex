@@ -27,7 +27,7 @@ defmodule CImgDisplay do
     ```
   """
   def create(cimg, title \\ "", normalization \\ 3, is_fullscreen \\ false, is_closed \\ false) do
-    with {:ok, h} <- CImg.NIF.cimgdisplay_u8(cimg, title, normalization, is_fullscreen, is_closed),
+    with {:ok, h} <- CImg.NIF.cimgdisplay_create(cimg, title, normalization, is_fullscreen, is_closed),
       do: %CImgDisplay{handle: h}
   end
 

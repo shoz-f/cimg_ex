@@ -1,7 +1,7 @@
 #ifndef cimg_plugin
 #define cimg_plugin "CImgEx.h"
+#include <vector>
 
-#define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_BMP
 #define STBI_NO_PSD
 #define STBI_NO_TGA
@@ -9,10 +9,8 @@
 #define STBI_NO_HDR
 #define STBI_NO_PIC
 #define STBI_NO_PNM
-
 #include "stb_image.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 #define cimg_load_plugin(filename) \
@@ -31,10 +29,9 @@
     ||  !cimg::strcasecmp(ext,"jif") \
     ||  !cimg::strcasecmp(ext,"png")) return save_to_file(filename); \
 
-#include <vector>
-
-typedef std::vector<unsigned char> MemBuff;
-
+#ifndef STB_IMAGE_WRITE_IMPLEMENTATION
+void stbi_write_vector(void* context, void* data, int size);
+#else
 void stbi_write_vector(void* context, void* data, int size)
 {
     auto ptr = reinterpret_cast<unsigned char*>(data);
@@ -43,6 +40,7 @@ void stbi_write_vector(void* context, void* data, int size)
         mem->push_back(*ptr++);
     }
 }
+#endif
 
 #include "CImg.h"
 
@@ -254,5 +252,4 @@ CImg<T> RGBtoGRAY(int optPN=cPOSI)
 {
     return assign(getRGBtoGRAY(cPOSI));
 }
-
 #endif
