@@ -239,7 +239,7 @@ defmodule CImg do
 
 
   @doc """
-  {seed} Create image{x,y,z,c} filled `val`.
+  Create image{x,y,z,c} filled `val`.
 
   ## Parameters
 
@@ -258,7 +258,7 @@ defmodule CImg do
 
   
   @doc """
-  {seed} Load a image from file. The file types supported by this function are jpeg, ping and bmp.
+  Load a image from file. The file types supported by this function are jpeg, ping and bmp.
   The file extension identifies which file type it is.
 
   ## Parameters
@@ -277,7 +277,7 @@ defmodule CImg do
 
 
   @doc """
-  {seed} Create a image from jpeg/png format binary.
+  Create a image from jpeg/png format binary.
   You can create an image from loaded binary of the JPEG/PNG file.
 
   ## Parameters
@@ -297,7 +297,7 @@ defmodule CImg do
 
 
   @doc """
-  {seed} Create image{x,y,z,c} from raw binary.
+  Create image{x,y,z,c} from raw binary.
   `create_from_bin` helps you to make the image from the serialiezed output tensor of DNN model.
 
   ## Parameters
@@ -321,7 +321,7 @@ defmodule CImg do
 
 
   @doc """
-  {seed} Create the image from %Npy{} format data.
+  Create the image from %Npy{} format data.
 
   ## Parameters
 
