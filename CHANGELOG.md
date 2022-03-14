@@ -8,6 +8,7 @@
 
   * Major Features and Improvements
     * add session execution mode.
+    * add CImg.display_kino/2.
 
   * Bug Fixes and Other Changes
     * fixed a bug that did not release image resources.
