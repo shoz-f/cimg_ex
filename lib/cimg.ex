@@ -178,18 +178,29 @@ defmodule CImg do
 
     * bin - binary
     * x,y,z,c - shape of the image represented by `bin`
-    * dtype - data type of bin: `"<f4"`/32bit-float, `"<u1"`/8bit-unsigned-int
+    * opts - convertion options
+      - { :dtype, xxx } - convert data type to pixel.
+          available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
+      - { :range, {lo, hi} } - convert range lo..hi to 0..255.
+          default range: {0.0, 1.0}
+      - :nchw - transform axes NCHW to NHWC.
+      - :bgt - convert color BGR -> RGB.
 
   ## Examples
 
     ```elixir
-    result = CImg.builder(bin 640, 480, 1, 3, "<f4")
+    result = CImg.builder(bin 640, 480, 1, 3, dtype: "<f4")
       |> CImg.draw_circle(100, 100, 30, {0, 255, 0})
       |> CImg.run()
     ```
   """
-  def builder(bin, x, y, z, c, dtype) when is_binary(bin) do
-    %Builder{seed: {:create_from_bin, bin, x, y, z, c, dtype}}
+  def builder(bin, x, y, z, c, opts \\ []) when is_binary(bin) do
+    dtype    = Keyword.get(opts, :dtype, "<f4")
+    {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
+    nchw     = :nchw in opts
+    bgr      = :bgr  in opts
+
+    %Builder{seed: {:create_from_bin, bin, x, y, z, c, dtype, lo, hi, nchw, bgr}}
   end
 
 
@@ -298,25 +309,29 @@ defmodule CImg do
 
   @doc """
   Create image{x,y,z,c} from raw binary.
-  `create_from_bin` helps you to make the image from the serialiezed output tensor of DNN model.
+  `from_binary` helps you to make the image from the serialiezed output tensor of DNN model.
 
   ## Parameters
 
     * bin - raw binary data to have in a image.
     * x,y,z,c - image's x-size, y-size, z-size and spectrum.
-    * dtype - data type in the binary. any data types are converted to int8 in the image.
-      - "<f4" - 32bit float (available value in range 0.0..1.0)
-      - "<u1" - 8bit unsigned integer
+    * opts - convertion options
+      - { :dtype, xxx } - convert data type to pixel.
+          available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
+      - { :range, {lo, hi} } - convert range lo..hi to 0..255.
+          default range: {0.0, 1.0}
+      - :nchw - transform axes NCHW to NHWC.
+      - :bgt - convert color BGR -> RGB.
 
   ## Examples
 
     ```elixir
     bin = TflInterp.get_output_tensor(__MODULE__, 0)
-    img = CImg.create_from_bin(bin, 300, 300, 1, 3, "<f4")
+    img = CImg.from_binary(bin, 300, 300, 1, 3, dtype: "<f4")
     ```
   """
-  def from_binary(bin, x, y, z, c, dtype) when is_binary(bin) do
-    builder(bin, x, y, z, c, dtype) |> run()
+  def from_binary(bin, x, y, z, c, opts \\ []) when is_binary(bin) do
+    builder(bin, x, y, z, c, opts) |> run()
   end
 
 
