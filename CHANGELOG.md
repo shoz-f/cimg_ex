@@ -1,5 +1,15 @@
 # Changelog
 
+## Release 0.1.11
+
+  * Breaking Changes
+
+  * Major Features and Improvements
+    * add convertion options to `from_binary/6`.
+
+  * Bug Fixes and Other Changes
+    * correct document.
+
 ## Release 0.1.10
 
   * Breaking Changes

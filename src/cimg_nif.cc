@@ -4,7 +4,7 @@
 *
 * Elixir/Erlang extension module: CImg
 * @author Shozo Fukuda
-* @date	  Sun Dec 06 10:10:35 JST 2020
+* @date   Sun Dec 06 10:10:35 JST 2020
 * System  MINGW64/Windows 10<br>
 *
 **/
@@ -24,26 +24,26 @@ using namespace cimg_library;
 /**************************************************************************{{{*/
 inline int enif_get_color(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char color[])
 {
-	int arity;
-	const ERL_NIF_TERM* tuple3;
-	unsigned int temp[3];
+    int arity;
+    const ERL_NIF_TERM* tuple3;
+    unsigned int temp[3];
 
-	if (!enif_get_tuple(env, term, &arity, &tuple3)
-	||  arity != 3
-	||  !enif_get_uint(env, tuple3[0], &temp[0])
-	||  !enif_get_uint(env, tuple3[1], &temp[1])
-	||  !enif_get_uint(env, tuple3[2], &temp[2])){
-		color[0] = 0;
-		color[1] = 0;
-		color[2] = 0;
-		return false;
-	}
+    if (!enif_get_tuple(env, term, &arity, &tuple3)
+    ||  arity != 3
+    ||  !enif_get_uint(env, tuple3[0], &temp[0])
+    ||  !enif_get_uint(env, tuple3[1], &temp[1])
+    ||  !enif_get_uint(env, tuple3[2], &temp[2])){
+        color[0] = 0;
+        color[1] = 0;
+        color[2] = 0;
+        return false;
+    }
 
-	color[0] = temp[0];
-	color[1] = temp[1];
-	color[2] = temp[2];
+    color[0] = temp[0];
+    color[1] = temp[1];
+    color[2] = temp[2];
 
-	return true;
+    return true;
 }
 
 const unsigned char COLOR_CODE16[][3] = {

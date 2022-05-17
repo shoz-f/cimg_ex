@@ -4,7 +4,7 @@
 *
 * Elixir/Erlang extension module: CImg command functions
 * @author Shozo Fukuda
-* @date	  Mon Feb 28 10:16:02 JST 2022
+* @date   Mon Feb 28 10:16:02 JST 2022
 * System  MINGW64/Windows 10, Ubuntu/WSL2<br>
 *
 **/
@@ -60,36 +60,70 @@ namespace NifCImgU8 {
     }
 
     CIMG_CMD(create_from_bin) {
-        std::string dtype;
+        ErlNifBinary   bin;
         unsigned int size_x, size_y, size_z, size_c;
-        ErlNifBinary bin;
+        std::string    dtype;
+        double        lo, hi;
+        bool          nchw;     // from NCHW
+        bool          bgr;     // from BGR to RGB
 
-        if (argc != 6
+        if (argc != 10
         ||  !enif_inspect_binary(env, argv[0], &bin)
         ||  !enif_get_uint(env, argv[1], &size_x)
         ||  !enif_get_uint(env, argv[2], &size_y)
         ||  !enif_get_uint(env, argv[3], &size_z)
         ||  !enif_get_uint(env, argv[4], &size_c)
-        ||  !enif_get_str(env, argv[5], &dtype)) {
+        ||  !enif_get_str(env, argv[5], &dtype)
+        ||  !enif_get_double(env, argv[6], &lo)
+        ||  !enif_get_double(env, argv[7], &hi)
+        ||  !enif_get_bool(env, argv[8], &nchw)
+        ||  !enif_get_bool(env, argv[9], &bgr)) {
             res = enif_make_badarg(env);
             return CIMG_ERROR;
         }
 
         img.assign(size_x, size_y, size_z, size_c);
 
+        // select BGR convertion
+        int color[4] = {0,1,2,3};
+        if (bgr && img.spectrum() >= 3) {
+            int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
+        }
+
         if (dtype == "<f4" &&  bin.size == size_x*size_y*size_z*size_c*sizeof(float)) {
             float *p = reinterpret_cast<float*>(bin.data);
-            cimg_forXY(img, x, y) {
-            cimg_forC(img, c) {
-                img(x, y, c) = static_cast<unsigned char>(255*(*p++)+0.5);
-            }}
+
+            auto convert = [lo, hi](float x) {
+                return (x < lo) ? 0.0
+                      : (x > hi) ? 255.0
+                      : (255.0*x/(hi - lo) - lo);
+
+//              return (lo <= x && x <= hi) ? (255.0*x/(hi - lo) - lo) : 0.0;
+            };
+
+            if (nchw) {
+                cimg_forC(img, c) cimg_forXY(img, x, y) {
+                    img(x, y, color[c]) = static_cast<unsigned char>(convert(*p++) + 0.5);
+                }
+            }
+            else {
+                cimg_forXY(img, x, y) cimg_forC(img, c) {
+                    img(x, y, color[c]) = static_cast<unsigned char>(convert(*p++) + 0.5);
+                }
+            }
         }
         else if (dtype == "<u1" &&  bin.size == size_x*size_y*size_z*size_c) {
             unsigned char *p = reinterpret_cast<unsigned char*>(bin.data);
-            cimg_forXY(img, x, y) {
-            cimg_forC(img, c) {
-                img(x, y, c) = static_cast<unsigned char>(*p++);
-            }}
+            if (nchw) {
+                cimg_forC(img, c) cimg_forXY(img, x, y) {
+                    img(x, y, color[c]) = static_cast<unsigned char>(*p++);
+                }
+            }
+            else {
+                cimg_forXY(img, x, y) cimg_forC(img, c) {
+                    img(x, y, color[c]) = static_cast<unsigned char>(*p++);
+                }
+            }
         }
         else {
             res = enif_make_badarg(env);
@@ -640,7 +674,7 @@ namespace NifCImgU8 {
 
         img.draw_text(x, y, text.c_str(), fg_color, bg_color, opacity, font_height);
 
-    	return CIMG_GROW;
+        return CIMG_GROW;
     }
 
     /**********************************************************************}}}*/
