@@ -714,6 +714,32 @@ defmodule CImg do
     push_cmd(builder, {:threshold, val, soft, strict})
   end
 
+  @doc """
+  {grow} Blending two images.
+
+  ## Parameters
+
+    * img - %CImg{} or %Builder{} object.
+    * mask - %CImg{} object.
+    * ratio - blending ratio: (1.0-ratio)*img + ratio*mask
+
+  ## Examples
+
+    ```Elixir
+    img = CImg.blend(img_org, img_mask, 0.6)
+    ```
+  """
+  def blend(img, mask, ratio \\ 0.5)
+
+  def blend(%CImg{}=cimg, %CImg{}=mask, ratio) do
+    builder(cimg)
+    |> blend(mask, ratio)
+    |> run()
+  end
+
+  def blend(%Builder{}=builder, %CImg{}=mask, ratio) do
+    push_cmd(builder, {:blend, mask, ratio})
+  end
 
   @doc """
   {grow} Create color mapped image by lut.

@@ -249,6 +249,23 @@ namespace NifCImgU8 {
         return CIMG_GROW;
     }
 
+    CIMG_CMD(blend) {
+        CImgT* mask;
+        double ratio;
+
+        if (argc != 2
+        ||  !enif_get_image(env, argv[0], &mask)
+        ||  !enif_get_number(env, argv[1], &ratio)
+        ||  !(ratio >= 0.0 && ratio <= 1.0)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        img = (1.0 - ratio)*img + ratio*(*mask);
+
+        return CIMG_GROW;
+    }
+
     CIMG_CMD(color_mapping) {
         char lut_name[8];
         unsigned int boundary_conditions;
