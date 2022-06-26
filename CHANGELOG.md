@@ -1,8 +1,14 @@
 # Changelog
 
-## Release 0.1.11
+## Release 0.1.12
 
-  * Breaking Changes
+  * Major Features and Improvements
+    * add image blending operation `blend/3`.
+
+  * Bug Fixes and Other Changes
+    * revised `Makefile` for possible to build for Nerves devices on MacOS. (PR#1)
+
+## Release 0.1.11
 
   * Major Features and Improvements
     * add convertion options to `from_binary/6`.
