@@ -32,6 +32,7 @@ else ifneq (,$(findstring MSYS_NT,$(HOSTOS)))
     else
         CFLAGS  += -Dcimg_display=0
     endif
+
 else ifeq (Linux, $(HOSTOS))
     NIFS = $(PRIV)/$(NIF_NAME).so
     LDFLAGS += -lm -lpthread
@@ -40,6 +41,7 @@ else ifeq (Linux, $(HOSTOS))
     else
         CFLAGS  += -Dcimg_display=0
     endif
+
 else
     $(error Not available system "$(HOSTOS)")
 endif
@@ -96,7 +98,7 @@ setup: $(EXTRA_LIB)
 ################################################################################
 # NIF name
 NIF_TABLE	+= src/cimg_nif.inc
-src/cimg_nif.inc: src/cimg_nif.h
+src/cimg_nif.inc: src/cimg_nif.cc
 	@echo "-GENERATE $(notdir $@)"
 	python3 nif_tbl.py -o $@ --prefix cimg_ --ns NifCImgU8:: $<
 
@@ -108,9 +110,14 @@ src/cimgdisplay_nif.inc: src/cimgdisplay_nif.h
 NIF_STUB	= lib/cimg/$(NIF_NAME).ex
 $(NIF_STUB): $(NIF_TABLE)
 	@echo "-GENERATE $(notdir $@)"
-	python3 nif_stub.py -o $@ CImg.NIF $^ src/cimgdisplay_nif.ext
+	python3 nif_stub.py -o $@ CImg.NIF $^
 
-$(BUILD)/$(NIF_NAME).o: $(NIF_STUB)
+CIMG_CMD_TABLE  += src/cimg_cmd.inc
+src/cimg_cmd.inc: src/cimg_cmd.h
+	@echo "-GENERATE $(notdir $@)"
+	python3 cmd_tbl.py -o $@ --ns cmd_ $<
+
+$(BUILD)/$(NIF_NAME).o: $(CIMG_CMD_TABLE) $(NIF_STUB)
 
 # Don't echo commands unless the caller exports "V=1"
 ${V}.SILENT:

@@ -4,95 +4,46 @@
 *
 * Elixir/Erlang extension module: CImg
 * @author Shozo Fukuda
-* @date	  Sun Dec 06 10:10:35 JST 2020
+* @date   Sun Dec 06 10:10:35 JST 2020
 * System  MINGW64/Windows 10<br>
 *
 **/
 /**************************************************************************{{{*/
-
-#include <stdio.h>
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
 #include "CImgEx.h"
 using namespace cimg_library;
 
-/***  Module Header  ******************************************************}}}*/
-/**
-* NIFs helper
-* @par description
-*   NIFs helper functions regarding CImg
-**/
-/**************************************************************************{{{*/
 #include "my_erl_nif.h"
 
-/**************************************************************************}}}*/
-/* Helper: enif get & make value override functions                           */
-/**************************************************************************{{{*/
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char* value)
-{
-    unsigned int temp;
-    int res = enif_get_uint(env, term, &temp);
-    *value = temp;
-    return res;
-}
-
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, int* value)
-{
-    return enif_get_int(env, term, value);
-}
-
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, float* value)
-{
-    double temp;
-    int res = enif_get_double(env, term, &temp);
-    *value = temp;
-    return res;
-}
-
-int enif_get_value(ErlNifEnv* env, ERL_NIF_TERM term, double* value)
-{
-    return enif_get_double(env, term, value);
-}
-
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, unsigned char value)
-{
-    return enif_make_uint(env, value);
-}
-
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, int value)
-{
-    return enif_make_int(env, value);
-}
-
-ERL_NIF_TERM enif_make_value(ErlNifEnv* env, double value)
-{
-    return enif_make_double(env, value);
-}
+#include <map>
 
 /**************************************************************************}}}*/
 /* CImg helper: enif get color value                                          */
 /**************************************************************************{{{*/
-int enif_get_color(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char color[])
+inline int enif_get_color(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char color[])
 {
-	int arity;
-	const ERL_NIF_TERM* tuple3;
-	unsigned int temp[3];
+    int arity;
+    const ERL_NIF_TERM* tuple3;
+    unsigned int temp[3];
 
-	if (!enif_get_tuple(env, term, &arity, &tuple3)
-	||  arity != 3
-	||  !enif_get_uint(env, tuple3[0], &temp[0])
-	||  !enif_get_uint(env, tuple3[1], &temp[1])
-	||  !enif_get_uint(env, tuple3[2], &temp[2])){
-		color[0] = 0;
-		color[1] = 0;
-		color[2] = 0;
-		return false;
-	}
+    if (!enif_get_tuple(env, term, &arity, &tuple3)
+    ||  arity != 3
+    ||  !enif_get_uint(env, tuple3[0], &temp[0])
+    ||  !enif_get_uint(env, tuple3[1], &temp[1])
+    ||  !enif_get_uint(env, tuple3[2], &temp[2])){
+        color[0] = 0;
+        color[1] = 0;
+        color[2] = 0;
+        return false;
+    }
 
-	color[0] = temp[0];
-	color[1] = temp[1];
-	color[2] = temp[2];
+    color[0] = temp[0];
+    color[1] = temp[1];
+    color[2] = temp[2];
 
-	return true;
+    return true;
 }
 
 const unsigned char COLOR_CODE16[][3] = {
@@ -184,7 +135,7 @@ int enif_get_color_name(ErlNifEnv* env, ERL_NIF_TERM term, const unsigned char**
 /**************************************************************************}}}*/
 /* CImg helper: enif get 3D position (vector)                                 */
 /**************************************************************************{{{*/
-int enif_get_pos(ErlNifEnv* env, ERL_NIF_TERM list, int val[3])
+inline int enif_get_pos(ErlNifEnv* env, ERL_NIF_TERM list, int val[3])
 {
     unsigned int len;
     if (!enif_is_list(env, list)
@@ -210,15 +161,103 @@ int enif_get_pos(ErlNifEnv* env, ERL_NIF_TERM list, int val[3])
 /**************************************************************************}}}*/
 /* CImg enif implementation                                                   */
 /**************************************************************************{{{*/
+namespace NifCImgU8 {
+    typedef CImg<unsigned char> CImgT;
+    typedef int (*CmdCImg)(CImgT& img, ErlNifEnv*, int, const ERL_NIF_TERM[], ERL_NIF_TERM&);
+
+    enum {
+        CIMG_ERROR = 0,
+        CIMG_SEED  = 1,
+        CIMG_GROW  = 2,
+        CIMG_CROP  = 3
+    };
+
+    /**********************************************************************}}}*/
+    /* Resource handling                                                      */
+    /**********************************************************************{{{*/
+    void init_resource_type(ErlNifEnv* env, const char* name)
+    {
+        Resource<CImgT>::init_resource_type(env, name);
+    }
+
+    int enif_get_image(ErlNifEnv* env, ERL_NIF_TERM term, CImgT** img)
+    {
+        ERL_NIF_TERM  key;
+        ERL_NIF_TERM  handle;
+        return enif_make_existing_atom(env, "handle", &key, ERL_NIF_LATIN1)
+                && enif_get_map_value(env, term, key, &handle)
+                && Resource<CImgT>::get_item(env, handle, img);
+    }
+
+    ERL_NIF_TERM enif_make_image(ErlNifEnv* env, CImgT* img)
+    {
+        return Resource<CImgT>::make_resource(env, img);
+    }
+}
+
+/***** CImg command implementation *****/
+#define  CIMG_CMD(name) int cmd_##name(CImgT& img, ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], ERL_NIF_TERM& res)
+#define _CIMG_CMD(name) int cmd_##name(CImgT& img, ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[], ERL_NIF_TERM& res)
+
+#include "cimg_cmd.h"
+
+#undef   CIMG_CMD
+#undef  _CIMG_CMD
+
+namespace NifCImgU8 {
+    /**********************************************************************}}}*/
+    /* CImg command interpreter                                               */
+    /**********************************************************************{{{*/
+    const std::map<std::string, CmdCImg> _cmd_cimg = {
+        #include "cimg_cmd.inc"
+    };
+
+    DECL_NIF(run) {
+        if (ality != 1
+        ||  !enif_is_list(env, term[0])) {
+            return enif_make_badarg(env);
+        }
+
+        ERL_NIF_TERM script = term[0];
+        ERL_NIF_TERM res;
+        ERL_NIF_TERM cmd;
+        CImgT img;
+
+        while (enif_get_list_cell(env, script, &cmd, &script)) {
+            int argc;
+            const ERL_NIF_TERM* argv;
+            if (!enif_get_tuple(env, cmd, &argc, &argv)) {
+                return enif_make_badarg(env);
+            }
+
+            char name[40];
+            if (argc < 1
+            ||  !enif_get_atom(env, argv[0], name, sizeof(name), ERL_NIF_LATIN1)
+            ||  _cmd_cimg.count(name) == 0) {
+                return enif_make_badarg(env);
+            }
+
+            CmdCImg fn = _cmd_cimg.at(name);
+            switch (fn(img, env, argc-1, &argv[1], res)) {
+            case CIMG_ERROR:
+                return res;
+            case CIMG_SEED:
+                break;
+            case CIMG_GROW:
+                break;
+            case CIMG_CROP:
+                return res;
+            }
+        }
+
+        return enif_make_badarg(env);
+    }
+}
+
 /***** Elixir.CImgDisplay.functions *****/
 #if cimg_display != 0
 #include "cimgdisplay_nif.h"
 #endif
-
-/***** Elixir.CImg.functions *****/
-#include "cimg_nif.h"
-
-typedef NifCImg<unsigned char> NifCImgU8;
 
 /**************************************************************************}}}*/
 /* enif resource setup                                                        */
@@ -242,7 +281,6 @@ static ErlNifFunc nif_funcs[] = {
 
 #if cimg_display != 0
     #include "cimgdisplay_nif.inc"
-    #include "cimgdisplay_nif.ext"
 #endif
 };
 
