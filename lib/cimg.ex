@@ -178,7 +178,7 @@ defmodule CImg do
 
     * bin - binary
     * x,y,z,c - shape of the image represented by `bin`
-    * opts - convertion options
+    * opts - conversion options
       - { :dtype, xxx } - convert data type to pixel.
           available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
       - { :range, {lo, hi} } - convert range lo..hi to 0..255.
@@ -315,7 +315,7 @@ defmodule CImg do
 
     * bin - raw binary data to have in a image.
     * x,y,z,c - image's x-size, y-size, z-size and spectrum.
-    * opts - convertion options
+    * opts - conversion options
       - { :dtype, xxx } - convert data type to pixel.
           available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
       - { :range, {lo, hi} } - convert range lo..hi to 0..255.
@@ -427,7 +427,7 @@ defmodule CImg do
 
   @doc """
   {crop} Get serialized binary of the image from top-left to bottom-right.
-  `to_binary/2` helps you to make 32bit-float arrary for the input tensors of DNN model
+  `to_binary/2` helps you to make 32bit-float array for the input tensors of DNN model
   or jpeg/png format binary on memory.
 
   ## Parameters
@@ -747,9 +747,9 @@ defmodule CImg do
   ## Parameters
 
     * img - %CImg{} or %Builder{}
-    * lut - color map. build-in or user defined.
-      - build-in map: {:default, :lines, :hot, :cool, :jet}
-      - user defined: list of color tupple, [{0,0,0},{10,8,9},{22,15,24}...].
+    * lut - color map. built-in or user defined.
+      - built-in map: {:default, :lines, :hot, :cool, :jet}
+      - user defined: list of color tuple, [{0,0,0},{10,8,9},{22,15,24}...].
     * boundary - handling the pixel value outside the color map range.
       - 0 - set to zero value.
       - 1 -
@@ -800,7 +800,7 @@ defmodule CImg do
 
     ```elixir
     img = CImg.load("sample.jpg")
-    blured = CImg.blur(img, 0.3)
+    blurred = CImg.blur(img, 0.3)
     ```
   """
   def blur(img, sigma, boundary_conditions \\ true, is_gaussian \\ true)
@@ -941,7 +941,7 @@ defmodule CImg do
 
     * builder - %Builder{}
     * x0,y0,x1,y1 - diagonal coordinates. if all of them are integer, they mean
-    actual coodinates. if all of them are float within 0.0-1.0, they mean ratio
+    actual coordinates. if all of them are float within 0.0-1.0, they mean ratio
     of the image.
     * color - boundary color
     * opacity - opacity: 0.0-1.0

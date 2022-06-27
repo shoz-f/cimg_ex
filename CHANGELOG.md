@@ -11,7 +11,7 @@
 ## Release 0.1.11
 
   * Major Features and Improvements
-    * add convertion options to `from_binary/6`.
+    * add conversion options to `from_binary/6`.
 
   * Bug Fixes and Other Changes
     * correct document.
@@ -65,4 +65,4 @@
 ## Release 0.1.6 (Jan 06 2022)
 
   * Major Features and Improvements
-    * add image convertor `to_jpeg/1`, `to_png/1` (experimental)
+    * add image converter `to_jpeg/1`, `to_png/1` (experimental)

@@ -84,7 +84,7 @@ namespace NifCImgU8 {
 
         img.assign(size_x, size_y, size_z, size_c);
 
-        // select BGR convertion
+        // select BGR conversion
         int color[4] = {0,1,2,3};
         if (bgr && img.spectrum() >= 3) {
             int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
@@ -794,7 +794,7 @@ namespace NifCImgU8 {
             return CIMG_ERROR;
         }
 
-        // select BGR convertion
+        // select BGR conversion
         int color[4] = {0,1,2,3};
         if (bgr && img.spectrum() >= 3) {
             int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
