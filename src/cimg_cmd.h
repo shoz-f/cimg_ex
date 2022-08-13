@@ -62,10 +62,12 @@ namespace NifCImgU8 {
     CIMG_CMD(create_from_bin) {
         ErlNifBinary   bin;
         unsigned int size_x, size_y, size_z, size_c;
-        std::string    dtype;
-        double        lo, hi;
-        bool          nchw;     // from NCHW
-        bool          bgr;     // from BGR to RGB
+        std::string dtype;
+        char conv_op[8];
+        const ERL_NIF_TERM* conv_prms;
+        int conv_prms_count = 2;
+        bool nchw;     // from NCHW
+        bool bgr;     // from BGR to RGB
 
         if (argc != 10
         ||  !enif_inspect_binary(env, argv[0], &bin)
@@ -74,8 +76,8 @@ namespace NifCImgU8 {
         ||  !enif_get_uint(env, argv[3], &size_z)
         ||  !enif_get_uint(env, argv[4], &size_c)
         ||  !enif_get_str(env, argv[5], &dtype)
-        ||  !enif_get_double(env, argv[6], &lo)
-        ||  !enif_get_double(env, argv[7], &hi)
+        ||  !enif_get_atom(env, argv[6], conv_op, sizeof(conv_op), ERL_NIF_LATIN1)
+        ||  !enif_get_tuple(env, argv[7], &conv_prms_count, &conv_prms)
         ||  !enif_get_bool(env, argv[8], &nchw)
         ||  !enif_get_bool(env, argv[9], &bgr)) {
             res = enif_make_badarg(env);
@@ -91,24 +93,63 @@ namespace NifCImgU8 {
         }
 
         if (dtype == "<f4" &&  bin.size == size_x*size_y*size_z*size_c*sizeof(float)) {
-            float *p = reinterpret_cast<float*>(bin.data);
+            /* setup normalization converter **********************************/
+            double a[4], b[4];
+            if (strcmp(conv_op, "gauss") == 0 && conv_prms_count == 3) {
+                for (int i = 0; i < conv_prms_count; i++) {
+                    int stat_prms_count;
+                    const ERL_NIF_TERM* stat_prms;
+                    double mu, sigma;
+                    if (!enif_get_tuple(env, conv_prms[i], &stat_prms_count, &stat_prms)
+                    ||  stat_prms_count != 2
+                    ||  !enif_get_double(env, stat_prms[0], &mu)
+                    ||  !enif_get_double(env, stat_prms[1], &sigma)) {
+                        res = enif_make_badarg(env);
+                        return CIMG_ERROR;
+                    }
 
-            auto convert = [lo, hi](float x) {
-                return (x < lo) ? 0.0
-                      : (x > hi) ? 255.0
-                      : (255.0*x/(hi - lo) - lo);
+                    a[color[i]] = sigma;
+                    b[color[i]] = -mu/sigma;
+                }
+                a[3] = 255.0;
+                b[3] = 0.0;
+            }
+            else if (strcmp(conv_op, "range") == 0 && conv_prms_count == 2) {
+                double lo, hi;
+                if (!enif_get_double(env, conv_prms[0], &lo)
+                ||  !enif_get_double(env, conv_prms[1], &hi)) {
+                    res = enif_make_badarg(env);
+                    return CIMG_ERROR;
+                }
 
-//              return (lo <= x && x <= hi) ? (255.0*x/(hi - lo) - lo) : 0.0;
+                for (int i = 0; i < 3; i++) {
+                    a[color[i]] = 255.0/(hi - lo);
+                    b[color[i]] = lo;
+                }
+                a[3] = 255.0;
+                b[3] = 0.0;
+            }
+            else {
+                res = enif_make_badarg(env);
+                return CIMG_ERROR;
+            }
+
+            auto convert = [a, b](int c, float x) {
+                int y = static_cast<int>(a[c]*(x - b[c]) + 0.5);
+                return (y < 0) ? 0 : (y > 255) ? 255 : y;
             };
+            /* ****************************************************************/
+
+            float *p = reinterpret_cast<float*>(bin.data);
 
             if (nchw) {
                 cimg_forC(img, c) cimg_forXY(img, x, y) {
-                    img(x, y, color[c]) = static_cast<unsigned char>(convert(*p++) + 0.5);
+                    img(x, y, color[c]) = convert(c, *p++);
                 }
             }
             else {
                 cimg_forXY(img, x, y) cimg_forC(img, c) {
-                    img(x, y, color[c]) = static_cast<unsigned char>(convert(*p++) + 0.5);
+                    img(x, y, color[c]) = convert(c, *p++);
                 }
             }
         }
@@ -780,14 +821,16 @@ namespace NifCImgU8 {
 
     CIMG_CMD(to_bin) {
         std::string dtype;
-        double     lo, hi;
-        bool        nchw;    // to transpose NCHW
-        bool        bgr;     // to convert RGB to BGR
+        char conv_op[8];
+        const ERL_NIF_TERM* conv_prms;
+        int conv_prms_count;
+        bool nchw;    // to transpose NCHW
+        bool bgr;     // to convert RGB to BGR
 
         if (argc != 5
         ||  !enif_get_str(env, argv[0], &dtype)
-        ||  !enif_get_double(env, argv[1], &lo)
-        ||  !enif_get_double(env, argv[2], &hi)
+        ||  !enif_get_atom(env, argv[1], conv_op, sizeof(conv_op), ERL_NIF_LATIN1)
+        ||  !enif_get_tuple(env, argv[2], &conv_prms_count, &conv_prms)
         ||  !enif_get_bool(env, argv[3], &nchw)
         ||  !enif_get_bool(env, argv[4], &bgr)) {
             res = enif_make_badarg(env);
@@ -797,29 +840,72 @@ namespace NifCImgU8 {
         // select BGR convertion
         int color[4] = {0,1,2,3};
         if (bgr && img.spectrum() >= 3) {
-            int tmp = color[0]; color[0] = color[2]; color[2] = tmp;
+            int tmp_c = color[0]; color[0] = color[2]; color[2] = tmp_c;
         }
 
         ERL_NIF_TERM binary;
         if (dtype == "<f4") {
+            /* setup normalization converter **********************************/
+            double a[4], b[4];
+            if (strcmp(conv_op, "gauss") == 0 && conv_prms_count == 3) {
+                for (int i = 0; i < conv_prms_count; i++) {
+                    int stat_prms_count;
+                    const ERL_NIF_TERM* stat_prms;
+                    double mu, sigma;
+                    if (!enif_get_tuple(env, conv_prms[i], &stat_prms_count, &stat_prms)
+                    ||  stat_prms_count != 2
+                    ||  !enif_get_double(env, stat_prms[0], &mu)
+                    ||  !enif_get_double(env, stat_prms[1], &sigma)) {
+                        res = enif_make_badarg(env);
+                        return CIMG_ERROR;
+                    }
+
+                    a[color[i]] = 1.0/sigma;
+                    b[color[i]] = -mu/sigma;
+                }
+                a[3] = 1.0/255.0;
+                b[3] = 0.0;
+            }
+            else if (strcmp(conv_op, "range") == 0 && conv_prms_count == 2) {
+                double lo, hi;
+                if (!enif_get_double(env, conv_prms[0], &lo)
+                ||  !enif_get_double(env, conv_prms[1], &hi)) {
+                    res = enif_make_badarg(env);
+                    return CIMG_ERROR;
+                }
+
+                for (int i = 0; i < 3; i++) {
+                    a[color[i]] = (hi - lo)/255.0;
+                    b[color[i]] = lo;
+                }
+                a[3] = 1.0/255.0;
+                b[3] = 0.0;
+            }
+            else {
+                res = enif_make_badarg(env);
+                return CIMG_ERROR;
+            }
+
+            auto convert = [a, b](int c, int x) {
+                return static_cast<float>(a[c]*x + b[c]);
+            };
+            /* ****************************************************************/
+
+
             float* buff = reinterpret_cast<float*>(enif_make_new_binary(env, 4*img.size(), &binary));
             if (buff == NULL) {
                 res = enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
                 return CIMG_ERROR;
             }
 
-            // normalization coefficient
-            double a = (hi - lo)/255.0;
-            double b = lo;
-
             if (nchw) {
                 cimg_forC(img, c) cimg_forXY(img, x, y) {
-                    *buff++ = a*(img(x, y, color[c])) + b;
+                    *buff++ = convert(c, img(x, y, color[c]));
                 }
             }
             else {
                 cimg_forXY(img, x, y) cimg_forC(img, c) {
-                    *buff++ = a*(img(x, y, color[c])) + b;
+                    *buff++ = convert(c, img(x, y, color[c]));
                 }
             }
         }

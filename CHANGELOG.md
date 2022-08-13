@@ -1,5 +1,13 @@
 # Changelog
 
+## Release 0.1.13
+
+  * Major Features and Improvements
+    * added Gaussian distribution transformation to `to_binary/e2` and `from_binary/6`.
+
+  * Bug Fixes and Other Changes
+    * fixed a bug of inverse range conversion of from_binary/6.
+
 ## Release 0.1.12
 
   * Major Features and Improvements

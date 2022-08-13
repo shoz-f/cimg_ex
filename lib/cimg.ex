@@ -183,6 +183,7 @@ defmodule CImg do
           available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
       - { :range, {lo, hi} } - convert range lo..hi to 0..255.
           default range: {0.0, 1.0}
+      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - inverse normalization by Gaussian distribution.
       - :nchw - transform axes NCHW to NHWC.
       - :bgt - convert color BGR -> RGB.
 
@@ -196,11 +197,16 @@ defmodule CImg do
   """
   def builder(bin, x, y, z, c, opts \\ []) when is_binary(bin) do
     dtype    = Keyword.get(opts, :dtype, "<f4")
-    {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
     nchw     = :nchw in opts
     bgr      = :bgr  in opts
 
-    %Builder{seed: {:create_from_bin, bin, x, y, z, c, dtype, lo, hi, nchw, bgr}}
+    {conv_op, conv_prms} = if prms = Keyword.get(opts, :gauss) do
+      {:gauss, prms}
+    else
+      {:range, Keyword.get(opts, :range, {0.0, 1.0})}
+    end
+
+    %Builder{seed: {:create_from_bin, bin, x, y, z, c, dtype, conv_op, conv_prms, nchw, bgr}}
   end
 
 
@@ -320,6 +326,7 @@ defmodule CImg do
           available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
       - { :range, {lo, hi} } - convert range lo..hi to 0..255.
           default range: {0.0, 1.0}
+      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - inverse normalization by Gaussian distribution.
       - :nchw - transform axes NCHW to NHWC.
       - :bgt - convert color BGR -> RGB.
 
@@ -328,6 +335,8 @@ defmodule CImg do
     ```elixir
     bin = TflInterp.get_output_tensor(__MODULE__, 0)
     img = CImg.from_binary(bin, 300, 300, 1, 3, dtype: "<f4")
+
+    img = CImg.from_binary(bin, 300, 300, 1, 3, gauss: {{103.53,57.375},{116.28,57.12},{123.675,58.395}})
     ```
   """
   def from_binary(bin, x, y, z, c, opts \\ []) when is_binary(bin) do
@@ -440,8 +449,9 @@ defmodule CImg do
       following options can be applied when converting the image to row binary.
       - { :dtype, xx } - convert pixel value to data type.
            available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
-      - { :range, {lo, hi} } - normarilzed range when :dtype is "<f4".
+      - {:range, {lo, hi}} - range transformation when :dtype is "<f4".
            default range: {0.0, 1.0}
+      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - normalize by Gaussian distribution.
       - :nchw - transform axes NHWC to NCHW.
       - :bgr - convert color RGB -> BGR.
 
@@ -461,6 +471,9 @@ defmodule CImg do
 
     bin2 = CImg.to_binary(img, dtype: "<f4")
     # convert pixel value to 32bit-float in range 0.0..1.0.
+    
+    bin3 = CImg.to_binary(img, gauss: {{103.53,57.375},{116.28,57.12},{123.675,58.395}})
+    # convert pixel value to 32bit-float normalized by Gaussian destribution: μr=103.53, σr=57.375,...
     ```
   """
   def to_binary(img, opts \\ [])
@@ -477,12 +490,17 @@ defmodule CImg do
   end
 
   def to_binary(%Builder{seed: seed, script: script}, opts) do
-    dtype    = Keyword.get(opts, :dtype, "<f4")
-    {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
-    nchw     = :nchw in opts
-    bgr      = :bgr  in opts
+    dtype = Keyword.get(opts, :dtype, "<f4")
+    nchw  = :nchw in opts
+    bgr   = :bgr  in opts
 
-    script = [{:to_bin, dtype, lo, hi, nchw, bgr} | script]
+    {conv_op, conv_prms} = if prms = Keyword.get(opts, :gauss) do
+      {:gauss, prms}
+    else
+      {:range, Keyword.get(opts, :range, {0.0, 1.0})}
+    end
+
+    script = [{:to_bin, dtype, conv_op, conv_prms, nchw, bgr} | script]
     with {:ok, _shape, bin} <- NIF.cimg_run([seed | Enum.reverse(script)]),
       do: bin
   end
@@ -495,10 +513,11 @@ defmodule CImg do
 
     * img - %CImg{} or %Builder{}
     * opts - conversion options
-      - { :dtype, xx } - convert pixel value to data type.
+      - {:dtype, xx} - convert pixel value to data type.
            available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
-      - { :range, {lo, hi} } - normarilzed range when :dtype is "<f4".
+      - {:range, {lo, hi}} - range transformation when :dtype is "<f4".
            default range: {0.0, 1.0}
+      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - normalize by Gaussian distribution.
       - :nchw - transform axes NHWC to NCHW.
       - :bgr - convert color RGB -> BGR.
 
@@ -525,12 +544,17 @@ defmodule CImg do
   end
 
   def to_npy(%Builder{seed: seed, script: script}, opts) do
-    dtype    = Keyword.get(opts, :dtype, "<f4")
-    {lo, hi} = Keyword.get(opts, :range, {0.0, 1.0})
-    nchw     = :nchw in opts
-    bgr      = :bgr  in opts
+    dtype = Keyword.get(opts, :dtype, "<f4")
+    nchw  = :nchw in opts
+    bgr   = :bgr  in opts
 
-    script = [{:to_bin, dtype, lo, hi, nchw, bgr} | script]
+    {conv_op, conv_prms} = if prms = Keyword.get(opts, :gauss) do
+      {:gauss, prms}
+    else
+      {:range, Keyword.get(opts, :range, {0.0, 1.0})}
+    end
+
+    script = [{:to_bin, dtype, conv_op, conv_prms, nchw, bgr} | script]
     with {:ok, shape, bin} <- NIF.cimg_run([seed | Enum.reverse(script)]) do
       %{
         descr: dtype,
@@ -1025,7 +1049,7 @@ defmodule CImg do
 
     * builder - %Builder{}
     * data - plot data (%CImg{})
-    * color - RGB color tuple: {R,G,B} where 0 ≦ R,G,B ≦ 255
+    * color - RGB color tuple: {R,G,B} where 0 竕ｦ R,G,B 竕ｦ 255
     * opacity -
     * plot_type - 
       * 0 = No plot.
