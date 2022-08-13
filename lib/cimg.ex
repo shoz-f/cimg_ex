@@ -183,7 +183,7 @@ defmodule CImg do
           available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
       - { :range, {lo, hi} } - convert range lo..hi to 0..255.
           default range: {0.0, 1.0}
-      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - inverse normalization by Gaussian distribution.
+      - { :gauss, {{mu-R,sigma-R},{mu-G,sigma-G},{mu-B,sigma-B}} } - inverse normalization by Gaussian distribution.
       - :nchw - transform axes NCHW to NHWC.
       - :bgt - convert color BGR -> RGB.
 
@@ -326,7 +326,7 @@ defmodule CImg do
           available: "<f4"/32-bit-float, "<u1"/8bit-unsigned-char
       - { :range, {lo, hi} } - convert range lo..hi to 0..255.
           default range: {0.0, 1.0}
-      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - inverse normalization by Gaussian distribution.
+      - { :gauss, {{mu-R,sigma-R},{mu-G,sigma-G},{mu-B,sigma-B}} } - inverse normalization by Gaussian distribution.
       - :nchw - transform axes NCHW to NHWC.
       - :bgt - convert color BGR -> RGB.
 
@@ -449,9 +449,9 @@ defmodule CImg do
       following options can be applied when converting the image to row binary.
       - { :dtype, xx } - convert pixel value to data type.
            available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
-      - {:range, {lo, hi}} - range transformation when :dtype is "<f4".
+      - { :range, {lo, hi} } - range transformation when :dtype is "<f4".
            default range: {0.0, 1.0}
-      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - normalize by Gaussian distribution.
+      - { :gauss, {{mu-R,sigma-R},{mu-G,sigma-G},{mu-B,sigma-B}} } - normalize by Gaussian distribution.
       - :nchw - transform axes NHWC to NCHW.
       - :bgr - convert color RGB -> BGR.
 
@@ -473,7 +473,7 @@ defmodule CImg do
     # convert pixel value to 32bit-float in range 0.0..1.0.
     
     bin3 = CImg.to_binary(img, gauss: {{103.53,57.375},{116.28,57.12},{123.675,58.395}})
-    # convert pixel value to 32bit-float normalized by Gaussian destribution: μr=103.53, σr=57.375,...
+    # convert pixel value to 32bit-float normalized by Gaussian destribution: mu-R=103.53, sigma-R=57.375,...
     ```
   """
   def to_binary(img, opts \\ [])
@@ -513,11 +513,11 @@ defmodule CImg do
 
     * img - %CImg{} or %Builder{}
     * opts - conversion options
-      - {:dtype, xx} - convert pixel value to data type.
+      - { :dtype, xx } - convert pixel value to data type.
            available: "<f4"/32bit-float, "<u1"/8bit-unsigned-char
-      - {:range, {lo, hi}} - range transformation when :dtype is "<f4".
+      - { :range, {lo, hi} } - range transformation when :dtype is "<f4".
            default range: {0.0, 1.0}
-      - {:gauss, {{μr,σr},{μg,σg},{μb,σb}}} - normalize by Gaussian distribution.
+      - { :gauss, {{mu-R,sigma-R},{mu-G,sigma-G},{mu-B,sigma-B}} } - normalize by Gaussian distribution.
       - :nchw - transform axes NHWC to NCHW.
       - :bgr - convert color RGB -> BGR.
 
