@@ -957,6 +957,38 @@ defmodule CImg do
     push_cmd(builder, {:set, x, y, z, c, val})
   end
 
+  @doc """
+  {grow} Booking to draw filled rectangle in the image.
+
+  ## Parameters
+    * builder - %Builder{}
+    * x0,y0,x1,y1 - diagonal coordinates. if all of them are integer, they mean
+    actual coodinates. if all of them are float within 0.0-1.0, they mean ratio
+    of the image.
+    * color - boundary color
+    * opacity - opacity: 0.0-1.0
+
+  ## Examples
+
+    ```elixir
+    CImg.builder(cimg)
+    |> CImg.fill_rect(img, 50, 30, 100, 80, {255, 0, 0}, 0.3)
+    |> CImg.display()
+
+    CImg.builder(cimg)
+    |> CImg.fill_rect(img, 0.2, 0.3, 0.6, 0.8, {0, 255, 0})
+    |> CImg.display()
+    ```
+  """
+  def fill_rect(%Builder{}=builder, x0, y0, x1, y1, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
+    cond do
+      Enum.all?([x0, y0, x1, y1], &is_integer/1) ->
+        push_cmd(builder, {:fill_rectangle, x0, y0, x1, y1, color, opacity, pattern})
+      Enum.all?([x0, y0, x1, y1], fn x -> 0.0 <= x and x <= 1.0 end) ->
+      	push_cmd(builder, {:fill_rectangle_ratio, x0, y0, x1, y1, color, opacity, pattern})
+    end
+  end
+
 
   @doc """
   {grow} Booking to draw rectangle in the image.
@@ -1003,6 +1035,31 @@ defmodule CImg do
     * radius - circle radius
     * color - filling color
     * opacity - opacity: 0.0-1.0
+    * pattern - boundary line pattern
+
+  ## Examples
+
+    ```elixir
+    result = CImg.builder(cimg)
+      |> CImg.fill_circle(imge, 100, 80, 40, {0, 0, 255}, 0xF0F0F0F0)
+      |> CImg.run()
+    ```
+  """
+  def fill_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
+    push_cmd(builder, {:fill_circle, x0, y0, radius, color, opacity, pattern})
+  end
+
+
+  @doc """
+  {grow} Booking to draw filled circle in the image.
+
+  ## Parameters
+
+    * builder - %Builder{}
+    * x0,y0 - circle center location
+    * radius - circle radius
+    * color - filling color
+    * opacity - opacity: 0.0-1.0
 
   ## Examples
 
@@ -1012,8 +1069,9 @@ defmodule CImg do
       |> CImg.run()
     ```
   """
+  @deprecated "Use fill_circle/7 instead"
   def draw_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0) do
-    push_cmd(builder, {:draw_circle_filled, x0, y0, radius, color, opacity})
+    push_cmd(builder, {:fill_circle, x0, y0, radius, color, opacity, 0})
   end
 
 

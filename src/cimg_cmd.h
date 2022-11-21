@@ -500,24 +500,29 @@ namespace NifCImgU8 {
         return CIMG_GROW;
     }
 
-    CIMG_CMD(draw_circle_filled) {
+    CIMG_CMD(fill_circle) {
         int x0;
         int y0;
         int radius;
         unsigned char color[3];
         double opacity;
+        unsigned int pattern;
 
-        if (argc != 5
+        if (argc != 6
         ||  !enif_get_int(env, argv[0], &x0)
         ||  !enif_get_int(env, argv[1], &y0)
         ||  !enif_get_int(env, argv[2], &radius)
         ||  !enif_get_color(env, argv[3], color)
-        ||  !enif_get_number(env, argv[4], &opacity)) {
+        ||  !enif_get_number(env, argv[4], &opacity)
+        ||  !enif_get_uint(env, argv[5], &pattern)) {
             res = enif_make_badarg(env);
             return CIMG_ERROR;
         }
 
         img.draw_circle(x0, y0, radius, color, opacity);
+        if (pattern != 0) {
+            img.draw_circle(x0, y0, radius, color, opacity, pattern);
+        }
 
         return CIMG_GROW;
     }
@@ -541,27 +546,6 @@ namespace NifCImgU8 {
         }
 
         img.draw_rectangle(x0, y0, x1, y1, color, opacity, pattern);
-
-        return CIMG_GROW;
-    }
-
-    CIMG_CMD(draw_rectangle_filled) {
-        int  x0, y0, x1, y1;
-        unsigned char color[3];
-        double opacity;
-
-        if (argc != 6
-        ||  !enif_get_int(env, argv[0], &x0)
-        ||  !enif_get_int(env, argv[1], &y0)
-        ||  !enif_get_int(env, argv[2], &x1)
-        ||  !enif_get_int(env, argv[3], &y1)
-        ||  !enif_get_color(env, argv[4], color)
-        ||  !enif_get_number(env, argv[5], &opacity)) {
-            res = enif_make_badarg(env);
-            return CIMG_ERROR;
-        }
-
-        img.draw_rectangle(x0, y0, x1, y1, color, opacity);
 
         return CIMG_GROW;
     }
@@ -593,6 +577,66 @@ namespace NifCImgU8 {
         int iy1 = y1*height;
 
         img.draw_rectangle(ix0, iy0, ix1, iy1, color, opacity, pattern);
+
+        return CIMG_GROW;
+    }
+
+    CIMG_CMD(fill_rectangle) {
+        int  x0, y0, x1, y1;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 7
+        ||  !enif_get_int(env, argv[0], &x0)
+        ||  !enif_get_int(env, argv[1], &y0)
+        ||  !enif_get_int(env, argv[2], &x1)
+        ||  !enif_get_int(env, argv[3], &y1)
+        ||  !enif_get_color(env, argv[4], color)
+        ||  !enif_get_number(env, argv[5], &opacity)
+        ||  !enif_get_uint(env, argv[6], &pattern)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        img.draw_rectangle(x0, y0, x1, y1, color, opacity);
+        if (pattern != 0) {
+            img.draw_rectangle(x0, y0, x1, y1, color, 1.0, pattern);
+        }
+
+        return CIMG_GROW;
+    }
+
+    CIMG_CMD(fill_rectangle_ratio) {
+        double x0, y0, x1, y1;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 7
+        ||  !enif_get_double(env, argv[0], &x0)
+        ||  !enif_get_double(env, argv[1], &y0)
+        ||  !enif_get_double(env, argv[2], &x1)
+        ||  !enif_get_double(env, argv[3], &y1)
+        ||  !enif_get_color(env, argv[4], color)
+        ||  !enif_get_number(env, argv[5], &opacity)
+        ||  !enif_get_uint(env, argv[6], &pattern)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        int width  = img.width();
+        int height = img.height();
+
+        int ix0 = x0*width;
+        int iy0 = y0*height;
+        int ix1 = x1*width;
+        int iy1 = y1*height;
+
+        img.draw_rectangle(ix0, iy0, ix1, iy1, color, opacity);
+        if (pattern != 0) {
+            img.draw_rectangle(ix0, iy0, ix1, iy1, color, 1.0, pattern);
+        }
 
         return CIMG_GROW;
     }
