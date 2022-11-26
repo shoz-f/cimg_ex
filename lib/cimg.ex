@@ -227,8 +227,11 @@ defmodule CImg do
   """
   def run(%Builder{seed: seed, script: script}) when not is_nil(seed) do
     script = [{:get_image} | script]
-    with {:ok, img} <- NIF.cimg_run([seed | Enum.reverse(script)]),
-      do: %CImg{handle: img}
+    case NIF.cimg_run([seed | Enum.reverse(script)]) do
+      {:ok, img} -> %CImg{handle: img}
+      {:ok, _shape, bin} -> bin
+      any -> any
+    end
   end
 
 
@@ -483,13 +486,17 @@ defmodule CImg do
     |> to_binary(opts)
   end
 
-  def to_binary(%Builder{seed: seed, script: script}, opts) when opts in [:jpeg, :png] do
-    script = [{:to_image, opts} | script]
-    with {:ok, image} <- NIF.cimg_run([seed | Enum.reverse(script)]),
-      do: image
+  def to_binary(%Builder{seed: seed, script: script}=builder, opts) when opts in [:jpeg, :png] do
+    if is_nil(seed) do
+      push_cmd(builder, {:to_image, opts})
+    else
+      script = [{:to_image, opts} | script]
+      with {:ok, image} <- NIF.cimg_run([seed | Enum.reverse(script)]),
+        do: image
+    end
   end
 
-  def to_binary(%Builder{seed: seed, script: script}, opts) do
+  def to_binary(%Builder{seed: seed, script: script}=builder, opts) do
     dtype = Keyword.get(opts, :dtype, "<f4")
     nchw  = :nchw in opts
     bgr   = :bgr  in opts
@@ -500,9 +507,13 @@ defmodule CImg do
       {:range, Keyword.get(opts, :range, {0.0, 1.0})}
     end
 
-    script = [{:to_bin, dtype, conv_op, conv_prms, nchw, bgr} | script]
-    with {:ok, _shape, bin} <- NIF.cimg_run([seed | Enum.reverse(script)]),
-      do: bin
+    if is_nil(seed) do
+      push_cmd(builder, {:to_bin, dtype, conv_op, conv_prms, nchw, bgr})
+    else
+      script = [{:to_bin, dtype, conv_op, conv_prms, nchw, bgr} | script]
+      with {:ok, _shape, bin} <- NIF.cimg_run([seed | Enum.reverse(script)]),
+        do: bin
+    end
   end
 
 
