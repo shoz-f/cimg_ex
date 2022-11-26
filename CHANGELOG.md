@@ -1,5 +1,11 @@
 # Changelog
 
+## Release 0.1.14
+
+  * Major Features and Improvements
+    * added "fill_rect" and "fill_circle".
+    * added CImg.Util module including 'aspect' and 'rand_palette'.
+
 ## Release 0.1.13
 
   * Major Features and Improvements
