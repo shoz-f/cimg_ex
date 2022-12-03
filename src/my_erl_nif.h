@@ -179,6 +179,7 @@ struct Resource {
 
     static void init_resource_type(ErlNifEnv* env, const char* name)
     {
+#if 1
         ErlNifResourceTypeInit init;
         init.dtor    = destroy;
         init.stop    = NULL;
@@ -187,6 +188,15 @@ struct Resource {
         init.dyncall = NULL;
 
         _ResType = enif_init_resource_type(env, name, &init, ERL_NIF_RT_CREATE, NULL);
+#else
+        _ResType = enif_open_resource_type(
+            env,
+            NULL,
+            name,
+            destroy,
+            ERL_NIF_RT_CREATE,
+            NULL);
+#endif
     }
 
     static void destroy(ErlNifEnv* env, void* ptr)
