@@ -5,26 +5,26 @@ defmodule CImg do
   ### Session execution
 
   Each function provided by CImg can be used alone (eager execution) or
-  as a set of functions (session execution). 
-  
+  as a set of functions (session execution).
+
   EAGER execution is good for interactive work because you can see the results
   of your image processing immediately. But it tends to consume more memory
   than necessary. On the other hand, SESSION execution reduces memory consumption
   because after assembling the image processing sequence, it is executed all at once.
-  
+
   To perform image processing in SESSION mode, you must assemble a image processing
   sequence using Elixir's pipe syntax. At the entrance of the pipe, place
   a function {seed} that generates a %Builder{}, then pipe in the necessary
   image processing {grow}, and finally place a function {crop} that executes
   those image processing.
-  
+
   In this document, the following symbols indicate which category each function belongs to.
     * {seed} - generate %Builder{}
     * {grow} - image processing piece
     * {crop} - execute session and get result
 
   #### Examples
-  
+
      ```elixir
     img = CImg.load("sample.jpg")
 
@@ -62,6 +62,33 @@ defmodule CImg do
     def inspect(cimg, opts) do
       concat(["%CImg{", to_doc(CImg.shape(cimg), opts), ", handle: ", to_doc(cimg.handle, opts), "}"])
     end
+  end
+
+  @color16 %{
+    :white   => { 255, 255, 255 },
+    :silver  => { 192, 192, 192 },
+    :gray    => { 128, 128, 128 },
+    :black   => {   0,   0,   0 },
+    :red     => { 255,   0,   0 },
+    :maroon  => { 128,   0,   0 },
+    :yellow  => { 255, 255,   0 },
+    :olive   => { 128, 128,   0 },
+    :lime    => {   0, 255,   0 },
+    :green   => {   0, 128,   0 },
+    :aqua    => {   0, 255, 255 },
+    :teal    => {   0, 128, 128 },
+    :brue    => {   0,   0, 255 },
+    :navy    => {   0,   0, 128 },
+    :fuchsia => { 255,   0, 255 },
+    :purple  => { 128,   0, 128 },
+  }
+
+  defp color_code(color_name) when is_atom(color_name) do
+    @color16[color_name]
+  end
+
+  defp color_code({_r,_g,_b}=rgb) do
+    rgb
   end
 
   defmodule Builder do
@@ -212,7 +239,7 @@ defmodule CImg do
 
   @doc """
   {crop} Returns an image with the script applied to the seed image.
-  
+
   ## Parameters
 
     * builder - %Builder{}
@@ -276,7 +303,7 @@ defmodule CImg do
     builder(x, y, z, c, val) |> run()
   end
 
-  
+
   @doc """
   Load a image from file. The file types supported by this function are jpeg, ping and bmp.
   The file extension identifies which file type it is.
@@ -474,7 +501,7 @@ defmodule CImg do
 
     bin2 = CImg.to_binary(img, dtype: "<f4")
     # convert pixel value to 32bit-float in range 0.0..1.0.
-    
+
     bin3 = CImg.to_binary(img, gauss: {{103.53,57.375},{116.28,57.12},{123.675,58.395}})
     # convert pixel value to 32bit-float normalized by Gaussian destribution: mu-R=103.53, sigma-R=57.375,...
     ```
@@ -611,9 +638,9 @@ defmodule CImg do
     * img - %CImg{} or %Builder{}
     * x0,y0,z0,c0, x1,y1,z1,c1 - window
     * bundary_condition -
-  
+
   ## Examples
-  
+
     ```elixir
     partial = CImg.get_crop(img, 100, 100, 0, 0, 400, 600, 0, 3)
     ```
@@ -969,6 +996,41 @@ defmodule CImg do
   end
 
   @doc """
+  [grow] Booking to draw line in the image.
+
+  ## Parameters
+    * builder - %Builder{}
+    * x1,y1,x2,y2 - ends of the line. if all of them are integer, they mean
+    actual coodinates. if all of them are float, they mean ratio of the image.
+    * color - line color
+    * opts
+      * thick: val - thick of line
+      * opacity: val - opacity: 0.0-1.0
+      * pattern: val - boundary line pattern: 32bit pattern
+
+  ## Examples
+
+    ```
+    CImg.builder(img)
+    |> CImg.draw_line(10, 10, 20, 30, :white, thick: 3)
+    ```
+  """
+  def draw_line(%Builder{}=builder, x1, y1, x2, y2, color, opts \\ []) do
+    thick   = Keyword.get(opts, :thick, 1)
+    opacity = Keyword.get(opts, :opacity, 1.0)
+    pattern = Keyword.get(opts, :pattern, 0xFFFFFFFF)
+
+    color = color_code(color)
+
+    cond do
+      Enum.all?([x1, y1, x2, y2], &is_integer/1) ->
+        push_cmd(builder, {:draw_line, x1, y1, x2, y2, color, thick, opacity, pattern})
+      Enum.all?([x1, y1, x2, y2], &is_float/1) ->
+      	push_cmd(builder, {:draw_line_ratio, x1, y1, x2, y2, color, thick, opacity, pattern})
+    end
+  end
+
+  @doc """
   {grow} Booking to draw filled rectangle in the image.
 
   ## Parameters
@@ -1120,12 +1182,12 @@ defmodule CImg do
     * data - plot data (%CImg{})
     * color - RGB color tuple: {R,G,B} where 0 竕ｦ R,G,B 竕ｦ 255
     * opacity -
-    * plot_type - 
+    * plot_type -
       * 0 = No plot.
       * 1 = Plot using segments.
       * 2 = Plot using cubic splines.
       * 3 = Plot with bars.
-    * vertex_type - 
+    * vertex_type -
       * 0 = No points.
       * 1 = Point.
       * 2 = Straight cross.
@@ -1138,7 +1200,7 @@ defmodule CImg do
     * pattern - line style
 
   ## Examples
-  
+
     ```elixir
       CImg.builder(screen)
         |> CImg.draw_graph(CImg.get_crop(image, 0, y, 0, 0, width-1, y, 0, 0), red,   1.0, 1, 0, 255.0, 0.0)
@@ -1186,9 +1248,9 @@ defmodule CImg do
 
   @doc """
   {grow} Draw text in th image.
-  
+
   ## Parameters
-  
+
     * builder - %Builder{}
     * x,y - position on the image where the text will begin to be drawn.
     * text - the text to be drawn.
@@ -1201,7 +1263,7 @@ defmodule CImg do
     * opacity - opacity: 0.0..1.0.
 
   ## Examples
-  
+
     ```elixir
     result = CImg.draw_text(builder, 10, 20, "Hello world!", 32, :white)
     ```

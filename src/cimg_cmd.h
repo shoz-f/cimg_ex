@@ -476,6 +476,120 @@ namespace NifCImgU8 {
         return CIMG_GROW;
     }
 
+    CIMG_CMD(draw_line) {
+        int ix1, iy1, ix2, iy2;
+        unsigned char color[3];
+        unsigned int thick;
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 8
+        ||  !enif_get_int(env, argv[0], &ix1)
+        ||  !enif_get_int(env, argv[1], &iy1)
+        ||  !enif_get_int(env, argv[2], &ix2)
+        ||  !enif_get_int(env, argv[3], &iy2)
+        ||  !enif_get_color(env, argv[4], color)
+        ||  !enif_get_uint(env, argv[5], &thick)
+        ||  !enif_get_number(env, argv[6], &opacity)
+        ||  !enif_get_uint(env, argv[7], &pattern)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        if (thick <= 2) {
+            img.draw_line(ix1, iy1, ix2, iy2, color, opacity, pattern);
+        }
+        else {
+            // Convert line (p1, p2) to polygon (pa, pb, pc, pd)
+            const double x_diff = (ix1 - ix2);
+            const double y_diff = (iy1 - iy2);
+            const double w_diff = thick / 2.0;
+
+            // Triangle between pa and p1: x_adj^2 + y_adj^2 = w_diff^2
+            // Triangle between p1 and p2: x_diff^2 + y_diff^2 = length^2
+            // Similar triangles: y_adj / x_diff = x_adj / y_diff = w_diff / length
+            // -> y_adj / x_diff = w_diff / sqrt(x_diff^2 + y_diff^2)
+            const int x_adj = y_diff * w_diff / std::sqrt(std::pow(x_diff, 2) + std::pow(y_diff, 2));
+            const int y_adj = x_diff * w_diff / std::sqrt(std::pow(x_diff, 2) + std::pow(y_diff, 2));
+
+            // Points are listed in clockwise order, starting from top-left
+            cimg_library::CImg<int> points(4, 2);
+            points(0, 0) = ix1 - x_adj;
+            points(0, 1) = iy1 + y_adj;
+            points(1, 0) = ix1 + x_adj;
+            points(1, 1) = iy1 - y_adj;
+            points(2, 0) = ix2 + x_adj;
+            points(2, 1) = iy2 - y_adj;
+            points(3, 0) = ix2 - x_adj;
+            points(3, 1) = iy2 + y_adj;
+
+            img.draw_polygon(points, color);
+        }
+
+        return CIMG_GROW;
+    }
+
+    CIMG_CMD(draw_line_ratio) {
+        double x1, y1, x2, y2;
+        unsigned char color[3];
+        unsigned int thick;
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 8
+        ||  !enif_get_double(env, argv[0], &x1)
+        ||  !enif_get_double(env, argv[1], &y1)
+        ||  !enif_get_double(env, argv[2], &x2)
+        ||  !enif_get_double(env, argv[3], &y2)
+        ||  !enif_get_color(env, argv[4], color)
+        ||  !enif_get_uint(env, argv[5], &thick)
+        ||  !enif_get_number(env, argv[6], &opacity)
+        ||  !enif_get_uint(env, argv[7], &pattern)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        int width  = img.width();
+        int height = img.height();
+
+        int ix1 = x1*width;
+        int iy1 = y1*height;
+        int ix2 = x2*width;
+        int iy2 = y2*height;
+
+        if (thick <= 2) {
+            img.draw_line(ix1, iy1, ix2, iy2, color, opacity, pattern);
+        }
+        else {
+            // Convert line (p1, p2) to polygon (pa, pb, pc, pd)
+            const double x_diff = (ix1 - ix2);
+            const double y_diff = (iy1 - iy2);
+            const double w_diff = thick / 2.0;
+
+            // Triangle between pa and p1: x_adj^2 + y_adj^2 = w_diff^2
+            // Triangle between p1 and p2: x_diff^2 + y_diff^2 = length^2
+            // Similar triangles: y_adj / x_diff = x_adj / y_diff = w_diff / length
+            // -> y_adj / x_diff = w_diff / sqrt(x_diff^2 + y_diff^2)
+            const int x_adj = y_diff * w_diff / std::sqrt(std::pow(x_diff, 2) + std::pow(y_diff, 2));
+            const int y_adj = x_diff * w_diff / std::sqrt(std::pow(x_diff, 2) + std::pow(y_diff, 2));
+
+            // Points are listed in clockwise order, starting from top-left
+            cimg_library::CImg<int> points(4, 2);
+            points(0, 0) = ix1 - x_adj;
+            points(0, 1) = iy1 + y_adj;
+            points(1, 0) = ix1 + x_adj;
+            points(1, 1) = iy1 - y_adj;
+            points(2, 0) = ix2 + x_adj;
+            points(2, 1) = iy2 - y_adj;
+            points(3, 0) = ix2 - x_adj;
+            points(3, 1) = iy2 + y_adj;
+
+            img.draw_polygon(points, color);
+        }
+
+        return CIMG_GROW;
+    }
+
     CIMG_CMD(draw_circle) {
         int x0;
         int y0;

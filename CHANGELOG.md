@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 0.1.15
+
+  * Major Features and Improvements
+    * added "draw_line"
+
 ## Release 0.1.14
 
   * Major Features and Improvements
