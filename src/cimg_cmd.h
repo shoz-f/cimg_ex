@@ -1067,6 +1067,24 @@ namespace NifCImgU8 {
                 }
             }
         }
+        else if (dtype == "<i4") {
+            int* buff = reinterpret_cast<int*>(enif_make_new_binary(env, 4*img.size(), &binary));
+            if (buff == NULL) {
+                res = enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "can't alloc binary", ERL_NIF_LATIN1));
+                return CIMG_ERROR;
+            }
+
+            if (nchw) {
+                cimg_forC(img, c) cimg_forXY(img, x, y) {
+                    *buff++ = img(x, y,  color[c]);
+                }
+            }
+            else {
+                cimg_forXY(img, x, y) cimg_forC(img, c) {
+                    *buff++ = img(x, y,  color[c]);
+                }
+            }
+        }
         else {
             unsigned char* buff = enif_make_new_binary(env, img.size(), &binary);
             if (buff == NULL) {
