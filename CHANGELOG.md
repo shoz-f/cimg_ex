@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 0.1.16
+
+  * Major Features and Improvements
+    * support dtype: "<i4" in to_binary/2.
+
 ## Release 0.1.15
 
   * Major Features and Improvements
