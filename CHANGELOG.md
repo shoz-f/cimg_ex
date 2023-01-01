@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 0.1.17
+
+  * Major Features and Improvements
+    * add "draw_marker/5".
+
 ## Release 0.1.16
 
   * Major Features and Improvements

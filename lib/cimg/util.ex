@@ -16,6 +16,18 @@ defmodule CImg.Util do
   end
 
   @doc """
+  Get inverse aspect of the image.
+  
+  ## Parameters
+  
+    * img - %CImg{}
+  """
+  def inv_aspect(%CImg{}=img) do
+    {w, h, _, _} = CImg.shape(img)
+    if w > h, do: {1.0, w / h}, else: {h / w, 1.0}
+  end
+
+  @doc """
   [util] Make random color palette %{}.
   
   ## Parameters

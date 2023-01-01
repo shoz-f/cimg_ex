@@ -996,6 +996,31 @@ defmodule CImg do
   end
 
   @doc """
+  [grow] Booking to draw marker.
+  
+  ## Parameters
+    * builder - %Builder{}
+    * x,y - location. if all of them are integer, they mean
+    actual coodinates. if all of them are float, they mean ratio of the image.
+    * color - marker color
+    * opts
+      * size - size of marker (>= 0)
+      * mark - shape of marker (only :circle is avalable now)
+  """
+  def draw_marker(%Builder{}=builder, x, y, color, opts \\ []) do
+    _mark = Keyword.get(opts, :mark, :circle)
+    size = Keyword.get(opts, :size, 1)
+
+    color = color_code(color)
+    cond do
+      Enum.all?([x, y], &is_integer/1) ->
+        push_cmd(builder, {:draw_marker, x, y, color, size})
+      Enum.all?([x, y], &is_float/1) ->
+      	push_cmd(builder, {:draw_marker_ratio, x, y, color, size})
+    end
+  end
+
+  @doc """
   [grow] Booking to draw line in the image.
 
   ## Parameters
@@ -1119,7 +1144,12 @@ defmodule CImg do
     ```
   """
   def fill_circle(%Builder{}=builder, x0, y0, radius, color, opacity \\ 1.0, pattern \\ 0xFFFFFFFF) do
-    push_cmd(builder, {:fill_circle, x0, y0, radius, color, opacity, pattern})
+    cond do
+      Enum.all?([x0, y0, radius], &is_integer/1) ->
+        push_cmd(builder, {:fill_circle, x0, y0, radius, color, opacity, pattern})
+      Enum.all?([x0, y0, radius], fn x -> 0.0 <= x and x <= 1.0 end) ->
+        push_cmd(builder, {:fill_circle_ratio, x0, y0, radius, color, opacity, pattern})
+    end
   end
 
 

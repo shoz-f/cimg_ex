@@ -476,6 +476,60 @@ namespace NifCImgU8 {
         return CIMG_GROW;
     }
 
+    CIMG_CMD(draw_marker) {
+        int ix, iy;
+        unsigned char color[3];
+        unsigned int size;
+
+        if (argc != 4
+        ||  !enif_get_int(env, argv[0], &ix)
+        ||  !enif_get_int(env, argv[1], &iy)
+        ||  !enif_get_color(env, argv[2], color)
+        ||  !enif_get_uint(env, argv[3], &size)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        if (size == 0) {
+            img.draw_point(ix, iy, color);
+        }
+        else {
+            img.draw_circle(ix, iy, size+1, color);
+        }
+
+        return CIMG_GROW;
+    }
+
+    CIMG_CMD(draw_marker_ratio) {
+        double x, y;
+        unsigned char color[3];
+        unsigned int size;
+
+        if (argc != 4
+        ||  !enif_get_double(env, argv[0], &x)
+        ||  !enif_get_double(env, argv[1], &y)
+        ||  !enif_get_color(env, argv[2], color)
+        ||  !enif_get_uint(env, argv[3], &size)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        int width  = img.width();
+        int height = img.height();
+
+        int ix = x*width;
+        int iy = y*height;
+
+        if (size == 0) {
+            img.draw_point(ix, iy, color);
+        }
+        else {
+            img.draw_circle(ix, iy, size+1, color);
+        }
+
+        return CIMG_GROW;
+    }
+
     CIMG_CMD(draw_line) {
         int ix1, iy1, ix2, iy2;
         unsigned char color[3];
@@ -636,6 +690,39 @@ namespace NifCImgU8 {
         img.draw_circle(x0, y0, radius, color, opacity);
         if (pattern != 0) {
             img.draw_circle(x0, y0, radius, color, opacity, pattern);
+        }
+
+        return CIMG_GROW;
+    }
+
+    CIMG_CMD(fill_circle_ratio) {
+        double x0, y0;
+        double radius;
+        unsigned char color[3];
+        double opacity;
+        unsigned int pattern;
+
+        if (argc != 6
+        ||  !enif_get_double(env, argv[0], &x0)
+        ||  !enif_get_double(env, argv[1], &y0)
+        ||  !enif_get_double(env, argv[2], &radius)
+        ||  !enif_get_color(env, argv[3], color)
+        ||  !enif_get_number(env, argv[4], &opacity)
+        ||  !enif_get_uint(env, argv[5], &pattern)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        int width  = img.width();
+        int height = img.height();
+
+        int ix0 = x0*width;
+        int iy0 = y0*height;
+        int iradius = radius*width;
+
+        img.draw_circle(ix0, iy0, iradius, color, opacity);
+        if (pattern != 0) {
+            img.draw_circle(ix0, iy0, iradius, color, opacity, pattern);
         }
 
         return CIMG_GROW;
