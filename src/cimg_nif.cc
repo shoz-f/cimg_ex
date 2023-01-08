@@ -22,6 +22,8 @@ using namespace cimg_library;
 /**************************************************************************}}}*/
 /* CImg helper: enif get color value                                          */
 /**************************************************************************{{{*/
+typedef unsigned char Color[3];
+
 inline int enif_get_color(ErlNifEnv* env, ERL_NIF_TERM term, unsigned char color[])
 {
     int arity;
@@ -130,6 +132,10 @@ int enif_get_color_name(ErlNifEnv* env, ERL_NIF_TERM term, const unsigned char**
     }
 
     return true;
+}
+
+inline bool is_black(Color color) {
+    return (color[0] == 0 && color[1] == 0 && color[2] == 0);
 }
 
 /**************************************************************************}}}*/

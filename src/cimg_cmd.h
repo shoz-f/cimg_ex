@@ -956,6 +956,57 @@ namespace NifCImgU8 {
         return CIMG_GROW;
     }
 
+    CIMG_CMD(paint_mask) {
+        CImgT* mask;
+        unsigned int lut_length;
+        double opacity;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &mask)
+        ||  !enif_get_list_length(env, argv[1], &lut_length)
+        ||  !enif_get_double(env, argv[2], &opacity)
+        ||  !(opacity >= 0.0 && opacity <= 1.0)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        if (mask->width()  != img.width()
+        ||  mask->height() != img.height()
+        ||  mask->depth()  != img.depth()) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        ERL_NIF_TERM list = argv[1], item;
+        Color color;
+        std::vector<Color> lut(lut_length+1);
+        for (int i = 1; i <= lut_length; i++) {
+            if (!enif_get_list_cell(env, list, &item, &list)
+            ||  !enif_get_color(env, item, color)) {
+                res = enif_make_badarg(env);
+                return CIMG_ERROR;
+            }
+            lut[i][0] = color[0];
+            lut[i][1] = color[1];
+            lut[i][2] = color[2];
+        }
+
+        unsigned char* r = img.data(0,0,0,0);
+        unsigned char* g = img.data(0,0,0,1);
+        unsigned char* b = img.data(0,0,0,2);
+        cimg_for(*mask, ptrs, unsigned char) {
+            int c = *ptrs;
+            if (c > 0 && c <= lut_length && !is_black(lut[c])) {
+                *r = (unsigned char)((1.0 - opacity)*(*r) + opacity*lut[c][0]);
+                *g = (unsigned char)((1.0 - opacity)*(*g) + opacity*lut[c][1]);
+                *b = (unsigned char)((1.0 - opacity)*(*b) + opacity*lut[c][2]);
+            }
+            r++; g++; b++;
+        }
+
+        return CIMG_GROW;
+    }
+
     CIMG_CMD(draw_text) {
         int x, y;
         std::string text;

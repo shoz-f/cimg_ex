@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 0.1.18
+
+  * Major Features and Improvements
+    * add "paint_mask/4".
+
 ## Release 0.1.17
 
   * Major Features and Improvements

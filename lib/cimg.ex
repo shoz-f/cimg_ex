@@ -77,7 +77,7 @@ defmodule CImg do
     :green   => {   0, 128,   0 },
     :aqua    => {   0, 255, 255 },
     :teal    => {   0, 128, 128 },
-    :brue    => {   0,   0, 255 },
+    :blue    => {   0,   0, 255 },
     :navy    => {   0,   0, 128 },
     :fuchsia => { 255,   0, 255 },
     :purple  => { 128,   0, 128 },
@@ -802,6 +802,35 @@ defmodule CImg do
   def blend(%Builder{}=builder, %CImg{}=mask, ratio) do
     push_cmd(builder, {:blend, mask, ratio})
   end
+
+  @doc """
+  {grow} Paint mask image.
+
+  ## Parameters
+
+    * img - %CImg{} or %Builder{} object.
+    * mask - %CImg{} object, binary image.
+    * lut - color map.
+    * opacity - opacity: (1.0-opacity)*img + opacity*mask
+
+  ## Examples
+
+    ```Elixir
+    img = CImg.paint_mask(img_org, img_mask, [{255,0,0}], 0.6)
+    ```
+  """
+  def paint_mask(img, mask, lut, opacity \\ 0.5)
+
+  def paint_mask(%CImg{}=cimg, %CImg{}=mask, lut, opacity) do
+    builder(cimg)
+    |> paint_mask(mask, lut, opacity)
+    |> run()
+  end
+
+  def paint_mask(%Builder{}=builder, %CImg{}=mask, lut, opacity) do
+    push_cmd(builder, {:paint_mask, mask, lut, opacity})
+  end
+
 
   @doc """
   {grow} Create color mapped image by lut.
