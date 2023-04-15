@@ -881,6 +881,21 @@ defmodule CImg do
   end
 
   @doc """
+  {grow} Append image.
+
+  ## Parameters
+
+    * img - %CImg{} or %Builder{}
+    * img2 - %CImg{}, append image
+    * axis - append on axis: {:x, :y, :z, :c}
+    * align - 
+
+  ## Examples
+
+    ```elixir
+    img = CImg.load("sample.jpg")
+    twice = CImg.append(img, img, :x)
+    ```
   """
   def append(img, img2, axis, align \\ 0.0)
   

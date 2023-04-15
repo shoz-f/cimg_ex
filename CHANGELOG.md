@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 0.1.19
+
+  * Major Features and Improvements
+    * add "append/4".
+
 ## Release 0.1.18
 
   * Major Features and Improvements

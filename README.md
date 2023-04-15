@@ -36,7 +36,7 @@ Add following dependency to your `mix.exs`.
 ```elixir
 def deps do
   [
-    {:cimg, "~> 0.1.10"}
+    {:cimg, "~> 0.1.19"}
   ]
 end
 ```
