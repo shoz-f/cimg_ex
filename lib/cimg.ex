@@ -827,6 +827,10 @@ defmodule CImg do
     |> run()
   end
 
+  def paint_mask(%Builder{}=builder, %CImg{}=mask, lut, opacity) when is_tuple(lut) do
+    paint_mask(builder, mask, [lut], opacity)
+  end
+
   def paint_mask(%Builder{}=builder, %CImg{}=mask, lut, opacity) do
     push_cmd(builder, {:paint_mask, mask, lut, opacity})
   end
@@ -876,6 +880,19 @@ defmodule CImg do
     end
   end
 
+  @doc """
+  """
+  def append(img, img2, axis, align \\ 0.0)
+  
+  def append(%CImg{}=cimg, %CImg{}=img2, axis, align) do
+    builder(cimg)
+    |> append(img2, axis, align)
+    |> run()
+  end
+
+  def append(%Builder{}=builder, %CImg{}=img2, axis, align) do
+    push_cmd(builder, {:append, img2, axis, align})
+  end
 
   @doc """
   {grow} Bluring image.

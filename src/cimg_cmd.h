@@ -363,6 +363,24 @@ namespace NifCImgU8 {
 
         return CIMG_GROW;
     }
+    
+    CIMG_CMD(append){
+        CImgT* img2;
+        char axis[2];
+        double align;
+
+        if (argc != 3
+        ||  !enif_get_image(env, argv[0], &img2)
+        ||  !enif_get_atom(env, argv[1], axis, 2, ERL_NIF_LATIN1)
+        ||  !enif_get_double(env, argv[2], &align)) {
+            res = enif_make_badarg(env);
+            return CIMG_ERROR;
+        }
+
+        img.append(*img2, axis[0], align);
+
+        return CIMG_GROW;
+    }
 
     CIMG_CMD(blur) {
         double sigma;
