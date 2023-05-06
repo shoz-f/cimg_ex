@@ -80,16 +80,18 @@ CIMG_VER    = 3.2.4
 EXTRA_LIB   += ./3rd_party/CImg-$(CIMG_VER)
 ./3rd_party/CImg-$(CIMG_VER):
 	@echo "-DOWNLOAD $(notdir $@)"
+	mkdir -p 3rd_party
 	cd ./3rd_party;\
-	wget http://cimg.eu/files/CImg_$(CIMG_VER).zip;\
+	wget -q http://cimg.eu/files/CImg_$(CIMG_VER).zip;\
 	unzip -q CImg_$(CIMG_VER).zip && rm CImg_*.zip
 
 #STB_COMMIT  = 5736b15f7ea0ffb08dd38af21067c314d6a3aae9
 EXTRA_LIB   += ./3rd_party/stb
 ./3rd_party/stb:
 	@echo "-DOWNLOAD $(notdir $@)"
+	mkdir -p 3rd_party
 	cd ./3rd_party;\
-	wget https://github.com/nothings/stb/archive/refs/heads/master.zip;\
+	wget -q https://github.com/nothings/stb/archive/refs/heads/master.zip;\
 	unzip -q master.zip && mv stb-master stb && rm master.zip
 
 setup: $(EXTRA_LIB)
