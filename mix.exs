@@ -4,7 +4,7 @@ defmodule Cimg.MixProject do
   def project do
     [
       app: :cimg,
-      version: "0.1.19",
+      version: "0.1.20",
       elixir: "~> 1.10",
       start_permanent: Mix.env() == :prod,
       make_executable: "make",
@@ -18,7 +18,7 @@ defmodule Cimg.MixProject do
       # Docs
       # name: "CImg",
       source_url: "https://github.com/shoz-f/cimg_ex.git",
- 
+
       docs: docs()
     ]
   end
@@ -47,7 +47,7 @@ defmodule Cimg.MixProject do
       name: "cimg",
       licenses: ["Apache-2.0"],
       links: %{"GitHub" => "https://github.com/shoz-f/cimg_ex.git"},
-      files: ~w(lib mix.exs README* CHANGELOG* LICENSE* Makefile nif_*.py cmd_tbl.py src)
+      files: ~w(lib mix.exs README* CHANGELOG* LICENSE* Makefile src)
     ]
   end
 

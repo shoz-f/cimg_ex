@@ -909,6 +909,7 @@ defmodule CImg do
     push_cmd(builder, {:append, img2, axis, align})
   end
 
+
   @doc """
   {grow} Bluring image.
 
@@ -997,6 +998,7 @@ defmodule CImg do
     * cimg - image object.
     * {x, y} - resize width and height or
       scale  - resize scale
+      cimg   - get the size from the cimg object
     * align - alignment mode
       - :none - fit resizing
       - :ul - fixed aspect resizing, upper-leftt alignment.
@@ -1012,15 +1014,20 @@ defmodule CImg do
   """
   def resize(img, size, align \\ :none, fill \\ 0)
 
-  def resize(%CImg{}=cimg, scale, align, fill) when is_float(scale) do
-    size_xy = -round(100*scale)
-    resize(cimg, {size_xy, size_xy}, align, fill)
-  end
-
-  def resize(%CImg{}=cimg, size, align, fill) when tuple_size(size) == 2 do
+  def resize(%CImg{}=cimg, size, align, fill) do
     builder(cimg)
     |> resize(size, align, fill)
     |> run()
+  end
+
+  def resize(%Builder{}=builder, %CImg{}=cimg2, align, fill) do
+    {w, h, _, _} = CImg.shape(cimg2)
+    resize(builder, {w, h}, align, fill)
+  end
+
+  def resize(%Builder{}=builder, scale, align, fill) when is_float(scale) do
+    size_xy = -round(100*scale)
+    resize(builder, {size_xy, size_xy}, align, fill)
   end
 
   def resize(%Builder{}=builder, {x, y}, align, fill) do
@@ -1033,7 +1040,6 @@ defmodule CImg do
 
     push_cmd(builder, {:resize, x, y, align, fill})
   end
-
 
   @doc """
   {grow} Set the pixel value at (x, y).

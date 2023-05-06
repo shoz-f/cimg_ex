@@ -1,5 +1,14 @@
 # Changelog
 
+## Release 0.1.20
+
+  * Major Features and Improvements
+    * added resize function which gets the resizing size from a CImg object.
+
+  * Bug Fixes and Other Changes
+    * revised download method for 3rd-parties.
+    * remove python scripts from the publish files.
+
 ## Release 0.1.19
 
   * Major Features and Improvements

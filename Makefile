@@ -76,22 +76,21 @@ clean:
 
 ################################################################################
 # Download 3rd-party libraries
-EXTRA_LIB	+= ./3rd_party/CImg
-./3rd_party/CImg:
+CIMG_VER    = 3.2.4
+EXTRA_LIB   += ./3rd_party/CImg-$(CIMG_VER)
+./3rd_party/CImg-$(CIMG_VER):
 	@echo "-DOWNLOAD $(notdir $@)"
-	mkdir -p $(dir $@)
-	#wget http://cimg.eu/files/CImg_latest.zip
-	#unzip CImg_latest.zip -d tmp
-	#mv tmp/CImg* $@
-	#rm CImg_latest.zip
-	#rmdir tmp
-	git clone https://github.com/dtschump/CImg.git $@
+	cd ./3rd_party;\
+	wget http://cimg.eu/files/CImg_$(CIMG_VER).zip;\
+	unzip -q CImg_$(CIMG_VER).zip && rm CImg_*.zip
 
-EXTRA_LIB	+= ./3rd_party/stb
+#STB_COMMIT  = 5736b15f7ea0ffb08dd38af21067c314d6a3aae9
+EXTRA_LIB   += ./3rd_party/stb
 ./3rd_party/stb:
 	@echo "-DOWNLOAD $(notdir $@)"
-	mkdir -p $(dir $@)
-	git clone https://github.com/nothings/stb.git $@
+	cd ./3rd_party;\
+	wget https://github.com/nothings/stb/archive/refs/heads/master.zip;\
+	unzip -q master.zip && mv stb-master stb && rm master.zip
 
 setup: $(EXTRA_LIB)
 
