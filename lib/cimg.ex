@@ -595,6 +595,7 @@ defmodule CImg do
     script = [{:to_bin, dtype, conv_op, conv_prms, nchw, bgr} | script]
     with {:ok, shape, bin} <- NIF.cimg_run([seed | Enum.reverse(script)]) do
       %{
+        __struct__: Npy,
         descr: dtype,
         fortran_order: false,
         shape: shape,
