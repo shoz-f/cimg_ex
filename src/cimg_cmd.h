@@ -466,6 +466,28 @@ namespace NifCImgU8 {
             resized.move_to(img);
             return CIMG_GROW;
         }
+        else if (align == 3) {
+            int x0, x1, y0, y1;
+            if (img.width() * height >= img.height() * width) {
+                int crop_width  = img.height() * (double)width/height;
+                x0 = (img.width() - crop_width) / 2;
+                x1 = x0 + crop_width - 1;
+                y0 = 0;
+                y1 = img.height();
+            }
+            else {
+                int crop_height = img.width() * (double)height/width;
+                x0 = 0;
+                x1 = img.width();
+                y0 = (img.height() - crop_height) / 2;
+                y1 = y0 + crop_height - 1;
+            }
+
+            CImgT resized = img.get_crop(x0, y0, x1, y1).resize(width, height, -100, -100, 3);
+
+            resized.move_to(img);
+            return CIMG_GROW;
+        }
         else {
             res = enif_make_badarg(env);
             return CIMG_ERROR;

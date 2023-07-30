@@ -1004,6 +1004,7 @@ defmodule CImg do
       - :none - fit resizing
       - :ul - fixed aspect resizing, upper-leftt alignment.
       - :br - fixed aspect resizing, bottom-right alignment.
+      - :crop - resizing the center crop to {x, y}.
     * fill - filling value for the margins, when fixed aspect resizing.
 
   ## Examples
@@ -1036,6 +1037,7 @@ defmodule CImg do
       :none -> 0
       :ul   -> 1
       :br   -> 2
+      :crop -> 3
       _     -> raise(ArgumentError, "unknown align '#{align}'.")
     end
 

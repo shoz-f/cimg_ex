@@ -1,5 +1,10 @@
 # Changelog
 
+## Release 0.1.21
+
+  * Major Features and Improvements
+    * added resize function which gets the resizing center crop from a CImg object.
+
 ## Release 0.1.20
 
   * Major Features and Improvements
