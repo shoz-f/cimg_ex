@@ -168,9 +168,9 @@ inline int enif_get_str(ErlNifEnv* env, ERL_NIF_TERM term, std::string* str)
 
 /***  Class Header  *******************************************************}}}*/
 /**
-* Erl resouce handling
+* Erl resource handling
 * @par description
-*   wrapping Erl resouce with C++ struct.
+*   wrapping Erl resource with C++ struct.
 **/
 /**************************************************************************{{{*/
 template <class T>
@@ -211,7 +211,7 @@ struct Resource {
     {
         Resource<T>* res = new(enif_alloc_resource(_ResType, sizeof(Resource<T>))) Resource<T>;
         if (res == nullptr) {
-            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Faild to allocate resource", ERL_NIF_LATIN1));
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Failed to allocate resource", ERL_NIF_LATIN1));
         }
         res->m_item = item;
 
@@ -225,7 +225,7 @@ struct Resource {
     {
         Resource<T>* res = new(enif_alloc_resource(_ResType, sizeof(Resource<T>))) Resource<T>;
         if (res == nullptr) {
-            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Faild to allocate resource", ERL_NIF_LATIN1));
+            return enif_make_tuple2(env, enif_make_error(env), enif_make_string(env, "Failed to allocate resource", ERL_NIF_LATIN1));
         }
         res->m_item = item;
 
